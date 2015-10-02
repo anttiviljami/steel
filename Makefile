@@ -3,16 +3,16 @@ override CFLAGS+=-std=c99 -Wall
 PREFIX=/usr/local
 LDFLAGS=
 
-all: fort
+all: steel
 
-fort: fort.o
-	$(CC) $(CFLAGS) fort.o -o fort $(LDFLAGS)
+steel: steel.o
+	$(CC) $(CFLAGS) steel.o -o steel $(LDFLAGS)
 
-fort.o: fort.c
-	$(CC) $(CFLAGS) -c fort.c
+steel.o: steel.c
+	$(CC) $(CFLAGS) -c steel.c
 
 clean:
-	rm fort
+	rm steel
 	rm *.o
 
 install: all
@@ -20,10 +20,10 @@ install: all
 		mkdir -p $(PREFIX)/share/man/man1;	\
 	fi
 	cp memo.1 $(PREFIX)/share/man/man1/
-	gzip -f $(PREFIX)/share/man/man1/fort.1
+	gzip -f $(PREFIX)/share/man/man1/steel.1
 	cp memo $(PREFIX)/bin/
 
 uninstall:
-	rm $(PREFIX)/bin/fort
-	rm $(PREFIX)/share/man/man1/fort.1.gz
+	rm $(PREFIX)/bin/steel
+	rm $(PREFIX)/share/man/man1/steel.1.gz
 
