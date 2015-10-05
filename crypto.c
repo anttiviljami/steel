@@ -60,10 +60,37 @@ static char *get_output_filename(const char *orig, const char *ext)
 	return path;
 }
 
+static char *generate_random_data(int size)
+{
+	char *data = NULL;
+	FILE *frnd = NULL;
+
+	data = malloc(size);
+
+	if(data == NULL) {
+		fprintf(stderr, "Malloc failed\n");		
+		return NULL;
+	}
+	
+	frnd = fopen("/dev/urandom", "r");
+
+	if(!frnd) {
+		fprintf(stderr, "Cannot open /dev/urandom\n");
+		free(data);
+		return NULL;
+	}
+
+	fread(data, 1, size, frnd);
+	fclose(frnd);
+	
+	return data;
+}
+
 static Key_t generate_key(const char *passphrase, bool *success)
 {
 	int ret;
 	char *keybytes = NULL;
+	char *saltbytes = NULL;
 	Key_t key;
 	
 	keybytes = calloc(1, KEY_SIZE);
@@ -74,8 +101,17 @@ static Key_t generate_key(const char *passphrase, bool *success)
 		return key;
 	}
 
+	saltbytes = generate_random_data(SALT_SIZE);
+
+	if(saltbytes == NULL) {
+		fprintf(stderr, "Could not generate salt\n");
+		free(keybytes);
+		*success = false;
+		return key;
+	}
+	
 	ret = mhash_keygen(KEYGEN_MCRYPT, MHASH_SHA256, 0, keybytes,
-			KEY_SIZE, NULL, 0, (uint8_t *)passphrase,
+			KEY_SIZE, saltbytes, SALT_SIZE, (uint8_t *)passphrase,
 			(uint32_t)strlen(passphrase));
 
 	if(ret < 0) {
@@ -84,8 +120,10 @@ static Key_t generate_key(const char *passphrase, bool *success)
 		*success = false;
 		return key;
 	}
-
+	
 	strcpy(key.data, keybytes);
+	strcpy(key.salt, saltbytes);
+	
 	*success = true;
 	
 	return key;
@@ -98,7 +136,6 @@ bool encrypt_file(const char *path, const char *passphrase)
 	char block;
 	char *IV = NULL;
 	int ret;
-	FILE *frnd = NULL;
 	FILE *fIn = NULL;
 	FILE *fOut = NULL;
 	char *output_filename = NULL;
@@ -118,30 +155,16 @@ bool encrypt_file(const char *path, const char *passphrase)
 		return false;
 	}
 
-	IV = malloc(IV_SIZE);
+	IV = generate_random_data(IV_SIZE);
 
 	if(IV == NULL) {
-		fprintf(stderr, "Malloc failed\n");
+		fprintf(stderr, "Could not create IV\n");
 		mcrypt_generic_deinit(td);
 		mcrypt_module_close(td);
-		
+
 		return false;
 	}
-
-	frnd = fopen("/dev/urandom", "r");
-
-	if(!frnd) {
-		fprintf(stderr, "Cannot open urandom\n");
-		free(IV);
-		mcrypt_generic_deinit(td);
-		mcrypt_module_close(td);
-		
-		return false;
-	}
-
-	fread(IV, 1, IV_SIZE, frnd);
-	fclose(frnd);
-
+	
 	ret = mcrypt_generic_init(td, key.data, KEY_SIZE, IV);
 
 	if(ret < 0) {
@@ -180,6 +203,7 @@ bool encrypt_file(const char *path, const char *passphrase)
 	}
 
 	fwrite(IV, 1, IV_SIZE, fOut);
+	fwrite(key.salt, 1, SALT_SIZE, fOut);
 
 	while(fread(&block, 1, 1, fIn) == 1) {
 		mcrypt_generic(td, &block, 1);
