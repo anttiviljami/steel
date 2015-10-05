@@ -67,6 +67,13 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'o':
+			if(argv[optind]) {
+				if(!db_open(optarg, argv[optind]))
+					return 0;
+			}
+			else {
+				fprintf(stderr, "Missing passphrase, see -h\n");
+			}
 			break;
 		case 'e':
 			break;

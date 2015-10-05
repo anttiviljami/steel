@@ -153,7 +153,11 @@ bool db_init(const char *path, const char *passphrase)
 bool db_open(const char *path, const char *passphrase)
 {
 
-
+	if(!decrypt_file(path, passphrase)) {
+		fprintf(stderr, "Decryption failed\n");
+		return false;
+	}
+	
 	create_lockfile(path);
 	
 	return false;

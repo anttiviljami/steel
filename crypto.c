@@ -117,12 +117,51 @@ static Key_t generate_key(const char *passphrase, bool *success)
 	if(ret < 0) {
 		fprintf(stderr, "Key generation failed\n");
 		free(keybytes);
+		free(saltbytes);
 		*success = false;
 		return key;
 	}
 	
 	strcpy(key.data, keybytes);
 	strcpy(key.salt, saltbytes);
+
+	free(keybytes);
+	free(saltbytes);
+	
+	*success = true;
+	
+	return key;
+}
+
+static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success)
+{
+	int ret;
+	char *keybytes = NULL;
+	Key_t key;
+	
+	keybytes = calloc(1, KEY_SIZE);
+
+	if(!keybytes) {
+		fprintf(stderr, "Calloc failed\n");
+		*success = false;
+		return key;
+	}
+
+	ret = mhash_keygen(KEYGEN_MCRYPT, MHASH_SHA256, 0, keybytes,
+			KEY_SIZE, salt, SALT_SIZE, (uint8_t *)passphrase,
+			(uint32_t)strlen(passphrase));
+
+	if(ret < 0) {
+		fprintf(stderr, "Key generation failed\n");
+		free(keybytes);
+		*success = false;
+		return key;
+	}
+	
+	strcpy(key.data, keybytes);
+	strcpy(key.salt, salt);
+
+	free(keybytes);
 	
 	*success = true;
 	
@@ -226,6 +265,121 @@ bool encrypt_file(const char *path, const char *passphrase)
 
 bool decrypt_file(const char *path, const char *passphrase)
 {
+	MCRYPT td;
+	Key_t key;
+	char block;
+	char *IV = NULL;
+	char *salt = NULL;
+	int ret;
+	FILE *fIn = NULL;
+	FILE *fOut = NULL;
+	char *output_filename = NULL;
+	bool success;
+	bool decryption_failed = false;
 
+	IV = malloc(IV_SIZE);
+
+	if(IV == NULL) {
+		fprintf(stderr, "Malloc failed\n");
+		return false;
+	}
+
+	salt = malloc(SALT_SIZE);
+
+	if(salt == NULL) {
+		fprintf(stderr, "Malloc failed\n");
+		return false;
+	}
+	
+	fIn = fopen(path, "r");
+
+	if(!fIn) {
+		fprintf(stderr, "Failed to open file\n");
+		free(IV);
+		free(salt);
+		return false;
+	}
+
+	//Read iv and salt from the beginning of the file
+	fread(IV, IV_SIZE, 1, fIn);
+	fread(salt, SALT_SIZE, 1, fIn);
+	
+	key = generate_key_salt(passphrase, salt, &success);
+
+	if(!success) {
+		fprintf(stderr, "Failed to get new key\n");
+		free(IV);
+		free(salt);
+		fclose(fIn);
+		return false;
+	}
+	
+	td = mcrypt_module_open("rijndael-256", NULL, "cfb", NULL);
+
+	if(td == MCRYPT_FAILED) {
+		fprintf(stderr, "Opening mcrypt module failed\n");
+		free(IV);
+		free(salt);
+		fclose(fIn);
+		
+		return false;
+	}
+
+	ret = mcrypt_generic_init(td, key.data, KEY_SIZE, IV);
+
+	if(ret < 0) {
+		mcrypt_perror(ret);
+		free(IV);
+		free(salt);
+		fclose(fIn);
+		mcrypt_generic_deinit(td);
+		mcrypt_module_close(td);
+		
+		return false;
+	}
+
+	output_filename = get_output_filename(path, ".plain");
+
+	fOut = fopen(output_filename, "w");
+
+	if(!fOut) {
+		fprintf(stderr, "Failed to open output file\n");
+		fclose(fIn);
+		free(IV);
+		free(salt);
+		free(output_filename);
+		mcrypt_generic_deinit(td);
+		mcrypt_module_close(td);
+		
+		return false;
+	}
+
+	while(fread(&block, 1, 1, fIn) == 1) {
+
+		if(mdecrypt_generic(td, &block, 1) != 0) {
+			//If decryption fails, abort and remove output file
+			fprintf(stderr, "Decryption failed\n");
+			remove(output_filename);
+			decryption_failed = true;
+			break;
+		}
+		
+		fwrite(&block, 1, 1, fOut);
+	}
+	
+	mcrypt_generic_deinit(td);
+	mcrypt_module_close(td);
+
+	free(IV);
+	free(output_filename);
+	free(salt);
+	
+	fclose(fIn);
+	fclose(fOut);
+
+	//Only remove original file if decryption was successful
+	if(!decryption_failed)
+		remove(path);
+	
 	return true;
 }
