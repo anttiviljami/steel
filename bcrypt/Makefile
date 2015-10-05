@@ -5,8 +5,8 @@ CFLAGS = $(shell grep '^CFLAGS = ' crypt_blowfish/Makefile | cut -d= -f2-)
 all: bcrypt.a
 
 test: bcrypt.c crypt_blowfish
-	$(CC) $(CFLAGS) -DTEST_BCRYPT -c bcrypt.c
-	$(CC) -o bcrypt_test bcrypt.o crypt_blowfish/*.o
+	$(CC) $(CFLAGS) -c bcrypt.c
+	$(CC) -o bcrypt.o crypt_blowfish/*.o
 
 bcrypt.a: bcrypt.o crypt_blowfish
 	ar r bcrypt.a bcrypt.o crypt_blowfish/*.o
@@ -18,5 +18,5 @@ crypt_blowfish:
 	$(MAKE) -C crypt_blowfish
 
 clean:
-	rm -f *.o bcrypt_test bcrypt.a *~ core
+	rm -f *.o bcrypt.a *~ core
 	$(MAKE) -C crypt_blowfish clean

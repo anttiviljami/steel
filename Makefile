@@ -5,8 +5,11 @@ LDFLAGS=-lmhash -lmcrypt -lsqlite3
 
 all: steel
 
-steel: steel.o database.o entries.o crypto.o
+steel: bcrypt.a steel.o database.o entries.o crypto.o
 	$(CC) $(CFLAGS) steel.o database.o entries.o crypto.o -o steel $(LDFLAGS)
+
+bcrypt.a:
+	cd bcrypt; $(MAKE)
 
 steel.o: steel.c
 	$(CC) $(CFLAGS) -c steel.c
@@ -23,6 +26,7 @@ crypto.o: crypto.c
 clean:
 	rm steel
 	rm *.o
+	cd bcrypt; $(MAKE) clean
 
 install: all
 	if [ ! -d $(PREFIX)/share/man/man1 ];then	\
