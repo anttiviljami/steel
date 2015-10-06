@@ -3,3 +3,4 @@ steel
 .directory
 *.a
 *.3
+.#*
