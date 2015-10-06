@@ -29,6 +29,8 @@
 
 #include "database.h"
 
+#define PWD_PROMPT "Master passphrase: "
+
 size_t my_getpass (char *prompt, char **lineptr, size_t *n, FILE *stream)
 {
     struct termios _old, _new;
@@ -103,7 +105,7 @@ int main(int argc, char *argv[])
 			char passphrase[pwdlen];
 			char *ptr = passphrase;
 
-			my_getpass("Master passphrase: ", &ptr, &pwdlen, stdin);
+			my_getpass(PWD_PROMPT, &ptr, &pwdlen, stdin);
 			
 			if(!db_init(optarg, passphrase))
 				return 0;
@@ -116,7 +118,7 @@ int main(int argc, char *argv[])
 			char passphrase[pwdlen];
 			char *ptr = passphrase;
 
-			my_getpass("Master passphrase: ", &ptr, &pwdlen, stdin);
+			my_getpass(PWD_PROMPT, &ptr, &pwdlen, stdin);
 			
 			if(!db_open(optarg, passphrase))
 				return 0;
@@ -131,7 +133,7 @@ int main(int argc, char *argv[])
 			char passphrase[pwdlen];
 			char *ptr = passphrase;
 
-			my_getpass("Master passphrase: ", &ptr, &pwdlen, stdin);
+			my_getpass(PWD_PROMPT, &ptr, &pwdlen, stdin);
 			db_close(passphrase);
 		
 			break;

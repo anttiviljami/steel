@@ -184,11 +184,9 @@ bool db_init(const char *path, const char *passphrase)
 
 bool db_open(const char *path, const char *passphrase)
 {
-	
 	if(!file_exists(path)) {
 		fprintf(stderr, "%s: does not exists\n", path);
-		free(path);
-		return;
+		return false;
 	}
 	
 	if(!decrypt_file(path, passphrase)) {
