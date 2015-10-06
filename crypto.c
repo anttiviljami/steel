@@ -27,6 +27,11 @@
 #include "crypto.h"
 #include "bcrypt/bcrypt.h"
 
+//Our magic number that's written into the
+//encrypted file. Used to determine if the file
+//is encrypted.
+static const int MAGIC_HEADER = 0x33497545;
+
 static const int KEY_SIZE = 32; //256 bits
 static const int IV_SIZE = 32; //256 bits
 static const int SALT_SIZE = 8; //64 bits
@@ -194,6 +199,29 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 	return key;
 }
 
+bool is_file_encrypted(const char *path)
+{
+	FILE *fp = NULL;
+	int data;
+	
+	fp = fopen(path, "r");
+
+	if(fp == NULL) {
+		fprintf(stderr, "Failed to open file\n");
+		return false;
+	}
+
+	//Skip hash, we don't need it here
+	fseek(fp, BCRYPT_HASHSIZE, SEEK_SET);
+	
+	fread((void *)&data, sizeof(MAGIC_HEADER), 1, fp);
+	fclose(fp);
+
+	if(data != MAGIC_HEADER)
+		return false;
+	
+	return true;
+}
 
 bool verify_passphrase(const char *passphrase, const char *hash)
 {
@@ -291,10 +319,13 @@ bool encrypt_file(const char *path, const char *passphrase)
 		
 		return false;
 	}
-	
+
+	fwrite((void *)&MAGIC_HEADER, sizeof(MAGIC_HEADER), 1, fOut);
 	fwrite(IV, 1, IV_SIZE, fOut);
 	fwrite(key.salt, 1, SALT_SIZE, fOut);
 
+	//Encrypt rest of the file content (the actual data,
+	//that needs to be protected)
 	while(fread(&block, 1, 1, fIn) == 1) {
 		mcrypt_generic(td, &block, 1);
 		fwrite(&block, 1, 1, fOut);
@@ -328,7 +359,13 @@ bool decrypt_file(const char *path, const char *passphrase)
 	bool success;
 	bool decryption_failed = false;
 	char hash[BCRYPT_HASHSIZE];
+	//int magic;
 
+	if(!is_file_encrypted(path)) {
+		fprintf(stderr, "File is not encrypted with Steel\n");
+		return false;
+	}
+	
 	IV = malloc(IV_SIZE);
 
 	if(IV == NULL) {
@@ -354,6 +391,9 @@ bool decrypt_file(const char *path, const char *passphrase)
 
 	//Read bcrypt hash, iv and salt from the beginning of the file
 	fread(hash, BCRYPT_HASHSIZE, 1, fIn);
+	//Skip the magic header, file's already checked
+	fseek(fIn, sizeof(MAGIC_HEADER), SEEK_CUR);
+	
 	fread(IV, IV_SIZE, 1, fIn);
 	fread(salt, SALT_SIZE, 1, fIn);
 
