@@ -111,7 +111,7 @@ static char *read_path_from_lockfile()
 {
 	char *lockfile = NULL;
 	FILE *fp = NULL;
-	char *data = NULL;
+	static char *data = NULL;
 	size_t len = 0;
 	
 	lockfile = get_lockfile_path();
@@ -207,7 +207,7 @@ void db_close(const char *passphrase)
 	char *path = NULL;
 
 	path = read_path_from_lockfile();
-
+	
 	if(path == NULL) {
 		fprintf(stderr, "Failed not read the path\n");
 		return;

@@ -34,7 +34,7 @@ static const int MAGIC_HEADER = 0x33497545;
 
 static const int KEY_SIZE = 32; //256 bits
 static const int IV_SIZE = 32; //256 bits
-static const int SALT_SIZE = 8; //64 bits
+static const int SALT_SIZE = 8;
 
 typedef struct Key
 {
@@ -66,7 +66,7 @@ static char *get_output_filename(const char *orig, const char *ext)
 	return path;
 }
 
-static char *generate_random_data(int size)
+static char *generate_random_data(size_t size)
 {
 	char *data = NULL;
 	FILE *frnd = NULL;
@@ -86,7 +86,7 @@ static char *generate_random_data(int size)
 		return NULL;
 	}
 
-	fread(data, 1, size, frnd);
+	fread(data, size, 1, frnd);
 	fclose(frnd);
 	
 	return data;
@@ -121,8 +121,8 @@ static Key_t generate_key(const char *passphrase, bool *success)
 {
 	int ret;
 	char *keybytes = NULL;
-	char *saltbytes = NULL;
 	Key_t key;
+	char *saltbytes = NULL;
 	
 	keybytes = calloc(1, KEY_SIZE);
 
@@ -133,7 +133,7 @@ static Key_t generate_key(const char *passphrase, bool *success)
 	}
 
 	saltbytes = generate_random_data(SALT_SIZE);
-
+	
 	if(saltbytes == NULL) {
 		fprintf(stderr, "Could not generate salt\n");
 		free(keybytes);
@@ -144,7 +144,7 @@ static Key_t generate_key(const char *passphrase, bool *success)
 	ret = mhash_keygen(KEYGEN_MCRYPT, MHASH_SHA256, 0, keybytes,
 			KEY_SIZE, saltbytes, SALT_SIZE, (uint8_t *)passphrase,
 			(uint32_t)strlen(passphrase));
-
+	
 	if(ret < 0) {
 		fprintf(stderr, "Key generation failed\n");
 		free(keybytes);
@@ -156,6 +156,9 @@ static Key_t generate_key(const char *passphrase, bool *success)
 	strcpy(key.data, keybytes);
 	strcpy(key.salt, saltbytes);
 
+	//memmove(key.data, keybytes, KEY_SIZE);
+	//memmove(key.salt, saltbytes, SALT_SIZE);
+	
 	free(keybytes);
 	free(saltbytes);
 	
@@ -246,9 +249,9 @@ bool encrypt_file(const char *path, const char *passphrase)
 	FILE *fOut = NULL;
 	char *output_filename = NULL;
 	bool success;
-	
-	key = generate_key(passphrase, &success);
 
+	key = generate_key(passphrase, &success);
+	
 	if(!success) {
 		fprintf(stderr, "Failed to get new key\n");
 		return false;
@@ -293,7 +296,7 @@ bool encrypt_file(const char *path, const char *passphrase)
 		return false;
 	}
 
-	output_filename = get_output_filename(path, ".steel"); 
+	output_filename = get_output_filename(path, ".steel");
 
 	fOut = fopen(output_filename, "w");
 
@@ -335,12 +338,14 @@ bool encrypt_file(const char *path, const char *passphrase)
 	mcrypt_module_close(td);
 
 	free(IV);
-	free(output_filename);
-
+	
 	fclose(fIn);
 	fclose(fOut);
 
 	remove(path);
+	rename(output_filename, path);
+
+	free(output_filename);
 	
 	return true;
 }
@@ -473,15 +478,19 @@ bool decrypt_file(const char *path, const char *passphrase)
 	mcrypt_module_close(td);
 
 	free(IV);
-	free(output_filename);
+	
 	free(salt);
 	
 	fclose(fIn);
 	fclose(fOut);
 
 	//Only remove original file if decryption was successful
-	if(!decryption_failed)
+	if(!decryption_failed) {
 		remove(path);
+		rename(output_filename, path);
+	}
+
+	free(output_filename);
 	
 	return true;
 }
