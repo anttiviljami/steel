@@ -111,7 +111,6 @@ int main(int argc, char *argv[])
 				return 0;
 		
 			break;
-			
 		}
 		case 'o': {
 			
@@ -124,7 +123,6 @@ int main(int argc, char *argv[])
 				return 0;
 		
 			break;
-			
 		}
 		case 'e':
 			break;
