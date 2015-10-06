@@ -359,7 +359,6 @@ bool decrypt_file(const char *path, const char *passphrase)
 	bool success;
 	bool decryption_failed = false;
 	char hash[BCRYPT_HASHSIZE];
-	//int magic;
 
 	if(!is_file_encrypted(path)) {
 		fprintf(stderr, "File is not encrypted with Steel\n");
