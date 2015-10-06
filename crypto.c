@@ -32,9 +32,13 @@
 //is encrypted.
 static const int MAGIC_HEADER = 0x33497545;
 
-static const int KEY_SIZE = 32; //256 bits
-static const int IV_SIZE = 32; //256 bits
-static const int SALT_SIZE = 8;
+//static const int KEY_SIZE = 32; //256 bits
+//static const int IV_SIZE = 32; //256 bits
+//static const int SALT_SIZE = 8; //64 bits
+
+#define KEY_SIZE (32) //256 bits
+#define IV_SIZE (32) //256 bits
+#define SALT_SIZE (8) //64 bits
 
 typedef struct Key
 {
@@ -66,12 +70,12 @@ static char *get_output_filename(const char *orig, const char *ext)
 	return path;
 }
 
-static char *generate_random_data(size_t size)
+static char *generate_random_data(int size)
 {
 	char *data = NULL;
 	FILE *frnd = NULL;
 
-	data = malloc(size);
+	data = calloc(1, size); //* sizeof(char));
 
 	if(data == NULL) {
 		fprintf(stderr, "Malloc failed\n");		
@@ -95,9 +99,9 @@ static char *generate_random_data(size_t size)
 static bool write_bcrypt_hash(FILE *fOut, const char *passphrase)
 {
 	char salt[BCRYPT_HASHSIZE];
-	char hash[BCRYPT_HASHSIZE];
+	char hash[BCRYPT_HASHSIZE] = {0};
 	int ret;
-
+	
 	ret = bcrypt_gensalt(12, salt);
 
 	if(ret != 0) {
@@ -152,12 +156,9 @@ static Key_t generate_key(const char *passphrase, bool *success)
 		*success = false;
 		return key;
 	}
-	
-	strcpy(key.data, keybytes);
-	strcpy(key.salt, saltbytes);
 
-	//memmove(key.data, keybytes, KEY_SIZE);
-	//memmove(key.salt, saltbytes, SALT_SIZE);
+	memmove(key.data, keybytes, KEY_SIZE);
+	memmove(key.salt, saltbytes, SALT_SIZE);
 	
 	free(keybytes);
 	free(saltbytes);

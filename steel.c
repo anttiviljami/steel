@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 			{"init-new",       required_argument, 0, 'i'},
 			{"open",           required_argument, 0, 'o'},
 			{"export",         required_argument, 0, 'e'},
-			{"close",          required_argument, 0, 'c'},
+			{"close",          no_argument,       0, 'c'},
 			{"copy",           required_argument, 0, 'C'},
 			{"show",           required_argument, 0, 's'},
 			{"gen-pass",       no_argument,       0, 'g'},
