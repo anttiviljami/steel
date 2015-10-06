@@ -9,7 +9,7 @@ test: bcrypt.c crypt_blowfish
 	$(CC) -o bcrypt.o crypt_blowfish/*.o
 
 bcrypt.a: bcrypt.o crypt_blowfish
-	ar r bcrypt.a bcrypt.o crypt_blowfish/*.o
+	ar r libbcrypt.a bcrypt.o crypt_blowfish/*.o
 
 bcrypt.o: bcrypt.c
 	$(CC) $(CFLAGS) -c bcrypt.c
@@ -18,5 +18,5 @@ crypt_blowfish:
 	$(MAKE) -C crypt_blowfish
 
 clean:
-	rm -f *.o bcrypt.a *~ core
+	rm -f *.o libbcrypt.a *~ core
 	$(MAKE) -C crypt_blowfish clean

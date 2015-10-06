@@ -1,7 +1,7 @@
 CC=gcc
 override CFLAGS+=-std=c99 -Wall
 PREFIX=/usr/local
-LDFLAGS=-lmhash -lmcrypt -lsqlite3
+LDFLAGS=-Lbcrypt -lmhash -lmcrypt -lsqlite3 -lbcrypt
 
 all: steel
 

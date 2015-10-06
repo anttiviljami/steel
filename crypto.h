@@ -23,5 +23,6 @@
 
 bool encrypt_file(const char *path, const char *passphrase);
 bool decrypt_file(const char *path, const char *passphrase);
+bool verify_passphrase(const char *passphrase, const char *hash);
 
 #endif

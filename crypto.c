@@ -25,6 +25,7 @@
 #include <mhash.h>
 
 #include "crypto.h"
+#include "bcrypt/bcrypt.h"
 
 static const int KEY_SIZE = 32; //256 bits
 static const int IV_SIZE = 32; //256 bits
@@ -84,6 +85,31 @@ static char *generate_random_data(int size)
 	fclose(frnd);
 	
 	return data;
+}
+
+static bool write_bcrypt_hash(FILE *fOut, const char *passphrase)
+{
+	char salt[BCRYPT_HASHSIZE];
+	char hash[BCRYPT_HASHSIZE];
+	int ret;
+
+	ret = bcrypt_gensalt(12, salt);
+
+	if(ret != 0) {
+		fprintf(stderr, "Could not generate salt\n");
+		return false;
+	}
+
+	ret = bcrypt_hashpw(passphrase, salt, hash);
+
+	if(ret != 0) {
+		fprintf(stderr, "Could not hash password\n");
+		return false;
+	}
+
+	fwrite(hash, 1, BCRYPT_HASHSIZE, fOut);
+	
+	return true;
 }
 
 static Key_t generate_key(const char *passphrase, bool *success)
@@ -168,6 +194,19 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 	return key;
 }
 
+
+bool verify_passphrase(const char *passphrase, const char *hash)
+{
+	int ret;
+	
+	ret = bcrypt_checkpw(passphrase ,hash);
+
+	if(ret != 0)
+		return false;
+	
+	return true;
+}
+
 bool encrypt_file(const char *path, const char *passphrase)
 {
 	MCRYPT td;
@@ -241,6 +280,18 @@ bool encrypt_file(const char *path, const char *passphrase)
 		return false;
 	}
 
+	if(!write_bcrypt_hash(fOut, passphrase)) {
+		fprintf(stderr, "Bcrypt failed\n");
+		fclose(fIn);
+		fclose(fOut);
+		free(IV);
+		free(output_filename);
+		mcrypt_generic_deinit(td);
+		mcrypt_module_close(td);
+		
+		return false;
+	}
+	
 	fwrite(IV, 1, IV_SIZE, fOut);
 	fwrite(key.salt, 1, SALT_SIZE, fOut);
 
@@ -276,6 +327,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 	char *output_filename = NULL;
 	bool success;
 	bool decryption_failed = false;
+	char hash[BCRYPT_HASHSIZE];
 
 	IV = malloc(IV_SIZE);
 
@@ -300,9 +352,20 @@ bool decrypt_file(const char *path, const char *passphrase)
 		return false;
 	}
 
-	//Read iv and salt from the beginning of the file
+	//Read bcrypt hash, iv and salt from the beginning of the file
+	fread(hash, BCRYPT_HASHSIZE, 1, fIn);
 	fread(IV, IV_SIZE, 1, fIn);
 	fread(salt, SALT_SIZE, 1, fIn);
+
+	//Verify passphrase
+	if(!verify_passphrase(passphrase, hash)) {
+		fprintf(stderr, "Invalid passphrase\n");
+		free(IV);
+		free(salt);
+		fclose(fIn);
+
+		return false;
+	}
 	
 	key = generate_key_salt(passphrase, salt, &success);
 

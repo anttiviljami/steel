@@ -39,71 +39,6 @@ static bool file_exists(const char *path)
 	return retval;
 }
 
-static char *get_lockfile_path()
-{
-	char *path = NULL;
-	char *env = NULL;
-	size_t len = 0;
-	
-	env = getenv("HOME");
-
-	if(env == NULL) {
-		fprintf(stderr, "Failed to get home path\n");
-		return NULL;
-	}
-
-	len = strlen(env);
-	
-	// +13 for /.steel_open filename
-	path = malloc((len + 13) * sizeof(char));
-	
-	if(path == NULL) {
-		fprintf(stderr, "Malloc failed\n");
-		return NULL;
-	}
-
-	strcpy(path, env);
-	strcat(path, "/.steel_open");
-
-	return path;
-}
-
-static void remove_lockfile()
-{
-	char *path = get_lockfile_path();
-
-	if(path == NULL)
-		return;
-	
-	if(file_exists(path)) {
-		remove(path);
-	}
-
-	free(path);
-}
-
-static void create_lockfile(const char *content)
-{
-	FILE *fp = NULL;
-	char *path = NULL;
-
-	path = get_lockfile_path();
-
-	if(path == NULL)
-		return;
-	
-	fp = fopen(path,"w");
-
-	if(fp == NULL) {
-		fprintf(stderr, "Failed to create lock file\n");
-		return;
-	}
-
-	fprintf(fp, "%s\n", content);
-	fclose(fp);
-	free(path);
-}
-
 bool db_init(const char *path, const char *passphrase)
 {
 	sqlite3 *db;
@@ -158,15 +93,15 @@ bool db_open(const char *path, const char *passphrase)
 		return false;
 	}
 	
-	create_lockfile(path);
 	
-	return false;
+	
+	return true;
 }
 
 void db_close(const char *passphrase)
 {
 
-	remove_lockfile();
+
 }
 
 void db_export_text(const char *path)
