@@ -391,8 +391,8 @@ bool decrypt_file(const char *path, const char *passphrase)
 	//Read bcrypt hash, iv and salt from the beginning of the file
 	fread(hash, BCRYPT_HASHSIZE, 1, fIn);
 	//Skip the magic header, file's already checked
-	fseek(fIn, sizeof(MAGIC_HEADER), SEEK_CUR);
-	
+	fseek(fIn, sizeof(int), SEEK_CUR);
+
 	fread(IV, IV_SIZE, 1, fIn);
 	fread(salt, SALT_SIZE, 1, fIn);
 

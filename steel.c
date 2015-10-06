@@ -18,15 +18,56 @@
  *
  */
 
+#define _XOPEN_SOURCE 700
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <getopt.h>
+#include <termios.h>
 
 #include "database.h"
+
+size_t my_getpass (char *prompt, char **lineptr, size_t *n, FILE *stream)
+{
+    struct termios _old, _new;
+    int nread;
+
+    /* Turn echoing off and fail if we can’t. */
+    if(tcgetattr(fileno(stream), &_old) != 0)
+        return -1;
+    
+    _new = _old;
+    _new.c_lflag &= ~ECHO;
+    
+    if(tcsetattr(fileno(stream), TCSAFLUSH, &_new) != 0)
+        return -1;
+
+    if(prompt)
+        printf("%s", prompt);
+
+    /* Read the password. */
+    nread = getline(lineptr, n, stream);
+
+    if(nread >= 1 && (*lineptr)[nread - 1] == '\n')
+    {
+        (*lineptr)[nread - 1] = 0;
+        nread--;
+    }
+    
+    printf("\n");
+
+    /* Restore terminal. */
+    tcsetattr(fileno(stream), TCSAFLUSH, &_old);
+
+    return nread;
+}
 
 int main(int argc, char *argv[])
 {
 	int option;
+	size_t pwdlen = 255;
 
 	while(true) {
 
@@ -57,28 +98,44 @@ int main(int argc, char *argv[])
 			break;
 
 		switch(option) {
-		case 'i':
-			if(argv[optind]) {
-				if(!db_init(optarg, argv[optind]))
-					return 0;
-			}
-			else {
-				fprintf(stderr, "Missing passphrase, see -h\n");
-			}
+		case 'i': {
+			
+			char passphrase[pwdlen];
+			char *ptr = passphrase;
+
+			my_getpass("Master passphrase: ", &ptr, &pwdlen, stdin);
+			
+			if(!db_init(optarg, passphrase))
+				return 0;
+		
 			break;
-		case 'o':
-			if(argv[optind]) {
-				if(!db_open(optarg, argv[optind]))
-					return 0;
-			}
-			else {
-				fprintf(stderr, "Missing passphrase, see -h\n");
-			}
+			
+		}
+		case 'o': {
+			
+			char passphrase[pwdlen];
+			char *ptr = passphrase;
+
+			my_getpass("Master passphrase: ", &ptr, &pwdlen, stdin);
+			
+			if(!db_open(optarg, passphrase))
+				return 0;
+		
 			break;
+			
+		}
 		case 'e':
 			break;
-		case 'c':
+		case 'c': {
+
+			char passphrase[pwdlen];
+			char *ptr = passphrase;
+
+			my_getpass("Master passphrase: ", &ptr, &pwdlen, stdin);
+			db_close(passphrase);
+		
 			break;
+		}
 		case 'C':
 			break;
 		case 's':
