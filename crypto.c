@@ -32,24 +32,6 @@
 //is encrypted.
 static const int MAGIC_HEADER = 0x33497545;
 
-//static const int KEY_SIZE = 32; //256 bits
-//static const int IV_SIZE = 32; //256 bits
-//static const int SALT_SIZE = 8; //64 bits
-
-#define KEY_SIZE (32) //256 bits
-#define IV_SIZE (32) //256 bits
-#define SALT_SIZE (8) //64 bits
-
-typedef struct Key
-{
-	//C99 does not support variable size
-	//arrays in file scope
-	
-	char data[32]; //KEY_SIZE
-	char salt[8];  //SALT_SIZE
-
-} Key_t;
-
 static char *get_output_filename(const char *orig, const char *ext)
 {
 	char *path = NULL;
@@ -193,14 +175,108 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 		return key;
 	}
 	
-	strcpy(key.data, keybytes);
-	strcpy(key.salt, salt);
+	memmove(key.data, keybytes, KEY_SIZE);
+	memmove(key.salt, salt, SALT_SIZE);
 
 	free(keybytes);
 	
 	*success = true;
 	
 	return key;
+}
+
+bool verify_hmac(const unsigned char *old, const unsigned char *new)
+{
+	if(strcmp(old, new) != 0)
+		return false;
+	
+	return true;
+}
+
+unsigned char *get_data_hmac(const char *data, long datalen, Key_t key)
+{
+	unsigned char *mac;
+	MHASH td;
+
+	td = mhash_hmac_init(MHASH_SHA256, key.data, KEY_SIZE,
+			mhash_get_hash_pblock(MHASH_SHA256));
+
+	if(td == MHASH_FAILED) {
+		fprintf(stderr, "Failed to initialize mhash\n");
+		
+		return false;
+	}
+	
+	mhash(td, data, datalen);
+        mac = mhash_hmac_end(td);
+	
+	return mac;
+}
+
+bool hmac_file_content(const char *path, Key_t key)
+{
+	unsigned char *mac;
+	FILE *fp = NULL;
+	char *data = NULL;
+	long datalen;
+	FILE *fOut = NULL;
+	
+	fp = fopen(path, "r");
+
+	if(fp == NULL) {
+		fprintf(stderr, "Failed to open file %s\n", path);
+
+		return false;
+	}
+
+	fseek(fp, 0, SEEK_END);
+	datalen = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	data = malloc(datalen + 1);
+
+	if(data == NULL) {
+		fprintf(stderr, "Malloc failed\n");
+		fclose(fp);
+
+		return false;
+	}
+
+	fread(data, datalen, 1, fp);
+	fclose(fp);
+
+	mac = get_data_hmac(data, datalen, key);
+	
+	/*td = mhash_hmac_init(MHASH_SHA256, key.data, KEY_SIZE,
+			mhash_get_hash_pblock(MHASH_SHA256));
+
+	if(td == MHASH_FAILED) {
+		fprintf(stderr, "Failed to initialize mhash\n");
+		free(data);
+		
+		return false;
+	}
+	
+	mhash(td, data, datalen);
+        mac = mhash_hmac_end(td);*/
+
+	fOut = fopen(path, "a");
+
+	if(fOut == NULL) {
+		fprintf(stderr, "Failed to open file %s\n", path);
+		free(data);
+
+		return false;
+	}
+
+	//Append hmac to the encrypted file
+	fwrite(mac, 1, HMAC_SIZE, fOut);
+	fclose(fOut);
+
+	free(mac);
+	free(data);
+	
+	return true;
 }
 
 bool is_file_encrypted(const char *path)
@@ -347,6 +423,14 @@ bool encrypt_file(const char *path, const char *passphrase)
 	rename(output_filename, path);
 
 	free(output_filename);
+
+	//Finally, write hmac of the encrypted data
+	//into the end of the file.
+	if(!hmac_file_content(path, key)) {
+		fprintf(stderr, "Failed to write hmac\n");
+		free(output_filename);
+		return false;
+	}
 	
 	return true;
 }
@@ -365,6 +449,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 	bool success;
 	bool decryption_failed = false;
 	char hash[BCRYPT_HASHSIZE];
+	long filesize;
 
 	if(!is_file_encrypted(path)) {
 		fprintf(stderr, "File is not encrypted with Steel\n");
@@ -393,6 +478,19 @@ bool decrypt_file(const char *path, const char *passphrase)
 		free(salt);
 		return false;
 	}
+
+	//Calculate file size and rewind the cursor
+	fseek(fIn, 0, SEEK_END);
+	filesize = ftell(fIn);
+	fseek(fIn, 0, SEEK_SET);
+
+	//Read the whole file into a buffer(except hmac) and verify the hmac
+	long len_before_hmac = (filesize - HMAC_SIZE) + 1;
+	char buffer[len_before_hmac];
+	unsigned char mac[HMAC_SIZE];
+	fread(buffer, len_before_hmac, 1, fIn);
+	fread(mac, HMAC_SIZE, 1, fIn);
+	fseek(fIn, 0, SEEK_SET);
 
 	//Read bcrypt hash, iv and salt from the beginning of the file
 	fread(hash, BCRYPT_HASHSIZE, 1, fIn);
@@ -464,6 +562,10 @@ bool decrypt_file(const char *path, const char *passphrase)
 
 	while(fread(&block, 1, 1, fIn) == 1) {
 
+		//Decrypt data until the hmac
+		if(ftell(fIn) == len_before_hmac)
+			break;
+		
 		if(mdecrypt_generic(td, &block, 1) != 0) {
 			//If decryption fails, abort and remove output file
 			fprintf(stderr, "Decryption failed\n");
@@ -477,11 +579,10 @@ bool decrypt_file(const char *path, const char *passphrase)
 	
 	mcrypt_generic_deinit(td);
 	mcrypt_module_close(td);
-
+	
 	free(IV);
-	
 	free(salt);
-	
+
 	fclose(fIn);
 	fclose(fOut);
 

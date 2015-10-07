@@ -33,23 +33,23 @@
 
 size_t my_getpass (char *prompt, char **lineptr, size_t *n, FILE *stream)
 {
-    struct termios _old, _new;
+    struct termios old, new;
     int nread;
 
-    /* Turn echoing off and fail if we can’t. */
-    if(tcgetattr(fileno(stream), &_old) != 0)
+    //Turn terminal echoing off.
+    if(tcgetattr(fileno(stream), &old) != 0)
         return -1;
     
-    _new = _old;
-    _new.c_lflag &= ~ECHO;
+    new = old;
+    new.c_lflag &= ~ECHO;
     
-    if(tcsetattr(fileno(stream), TCSAFLUSH, &_new) != 0)
+    if(tcsetattr(fileno(stream), TCSAFLUSH, &new) != 0)
         return -1;
 
     if(prompt)
         printf("%s", prompt);
 
-    /* Read the password. */
+    //Read the password.
     nread = getline(lineptr, n, stream);
 
     if(nread >= 1 && (*lineptr)[nread - 1] == '\n')
@@ -60,8 +60,8 @@ size_t my_getpass (char *prompt, char **lineptr, size_t *n, FILE *stream)
     
     printf("\n");
 
-    /* Restore terminal. */
-    tcsetattr(fileno(stream), TCSAFLUSH, &_old);
+    //Restore terminal echo.
+    tcsetattr(fileno(stream), TCSAFLUSH, &old);
 
     return nread;
 }
