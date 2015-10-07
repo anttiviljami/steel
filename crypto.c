@@ -187,8 +187,11 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 
 bool verify_hmac(const unsigned char *old, const unsigned char *new)
 {
-	if(strcmp(old, new) != 0)
-		return false;
+	for(int i = 0; i < HMAC_SIZE; i++) {
+	
+		if(old[i] != new[i])
+			return false;
+	}
 	
 	return true;
 }
@@ -204,7 +207,7 @@ unsigned char *get_data_hmac(const char *data, long datalen, Key_t key)
 	if(td == MHASH_FAILED) {
 		fprintf(stderr, "Failed to initialize mhash\n");
 		
-		return false;
+		return NULL;
 	}
 	
 	mhash(td, data, datalen);
@@ -475,7 +478,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 	long len_before_hmac = (filesize - HMAC_SIZE) + 1;
 	char buffer[len_before_hmac];
 	unsigned char mac[HMAC_SIZE];
-	fread(buffer, len_before_hmac, 1, fIn);
+	fread(buffer, len_before_hmac - 1, 1, fIn);
 	fread(mac, HMAC_SIZE, 1, fIn);
 	fseek(fIn, 0, SEEK_SET);
 
@@ -497,10 +500,22 @@ bool decrypt_file(const char *path, const char *passphrase)
 		return false;
 	}
 
-	//Verify hmac
-	
 	key = generate_key_salt(passphrase, salt, &success);
 
+	//Verify hmac
+	unsigned char *new_mac = get_data_hmac(buffer, len_before_hmac - 1, key);
+	if(!verify_hmac(mac, new_mac)) {
+		fprintf(stderr, "Data was tampered. Aborting decryption\n");
+		free(new_mac);
+		free(IV);
+		free(salt);
+		fclose(fIn);
+
+		return false;
+	}
+
+	free(new_mac);
+	
 	if(!success) {
 		fprintf(stderr, "Failed to get new key\n");
 		free(IV);
