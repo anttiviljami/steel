@@ -247,19 +247,6 @@ bool hmac_file_content(const char *path, Key_t key)
 
 	mac = get_data_hmac(data, datalen, key);
 	
-	/*td = mhash_hmac_init(MHASH_SHA256, key.data, KEY_SIZE,
-			mhash_get_hash_pblock(MHASH_SHA256));
-
-	if(td == MHASH_FAILED) {
-		fprintf(stderr, "Failed to initialize mhash\n");
-		free(data);
-		
-		return false;
-	}
-	
-	mhash(td, data, datalen);
-        mac = mhash_hmac_end(td);*/
-
 	fOut = fopen(path, "a");
 
 	if(fOut == NULL) {
@@ -509,6 +496,8 @@ bool decrypt_file(const char *path, const char *passphrase)
 
 		return false;
 	}
+
+	//Verify hmac
 	
 	key = generate_key_salt(passphrase, salt, &success);
 
