@@ -28,8 +28,11 @@
 #include <sys/stat.h>
 
 #include "database.h"
+#include "entries.h"
 #include "crypto.h"
 
+//Returns true is file exists and false if not.
+//Function should be portable.
 static bool file_exists(const char *path)
 {
 	bool retval = false;
@@ -41,6 +44,10 @@ static bool file_exists(const char *path)
 	return retval;
 }
 
+//Get Steel lockfile path.
+//Lock file is a simple file which has the currently opened
+//database path. Returns NULL on failure. Caller must free the return
+//value.
 static char *get_lockfile_path()
 {
 	char *path = NULL;
@@ -70,6 +77,7 @@ static char *get_lockfile_path()
 	return path;
 }
 
+//Remove the lock file. Called on db close.
 static void remove_lockfile()
 {
 	char *path = get_lockfile_path();
@@ -84,6 +92,8 @@ static void remove_lockfile()
 	free(path);
 }
 
+//Creates the lock file and writes content to it.
+//Content should be the currently opened database path.
 static void create_lockfile(const char *content)
 {
 	FILE *fp = NULL;
@@ -107,6 +117,9 @@ static void create_lockfile(const char *content)
 	free(path);
 }
 
+//Reads the currently opened database path from the
+//lock file. Returns NULL on failure, the path on success.
+//Caller must free the return value.
 static char *read_path_from_lockfile()
 {
 	char *lockfile = NULL;
@@ -136,6 +149,10 @@ static char *read_path_from_lockfile()
 	return data;
 }
 
+//Initializes new Steel database to the path given.
+//After creation, the database is encrypted with the passphrase.
+//Returns true on success, false on failure. Function does not override
+//existing database in the path.
 bool db_init(const char *path, const char *passphrase)
 {
 	sqlite3 *db;
@@ -161,7 +178,7 @@ bool db_init(const char *path, const char *passphrase)
 		"passphrase TEXT," \
 		"url TEXT," \
 		"notes TEXT," \
-		"guid TEXT not null);";
+		"id INTEGER PRIMARY KEY);";
 
 	retval = sqlite3_exec(db, sql, NULL, 0, &error);
 
@@ -182,6 +199,9 @@ bool db_init(const char *path, const char *passphrase)
 	return true;
 }
 
+//Decrypt the encrypted database pointed by path.
+//Returns true on success, false on failure.
+//Path is also written to the lock file.
 bool db_open(const char *path, const char *passphrase)
 {
 	if(!file_exists(path)) {
@@ -201,6 +221,8 @@ bool db_open(const char *path, const char *passphrase)
 	return true;
 }
 
+//Encrypt database file with passphrase and
+//remove lock file.
 void db_close(const char *passphrase)
 {
 	//get db path from lock file
@@ -235,4 +257,66 @@ void db_export_text(const char *path)
 
 }
 
+void db_list_all()
+{
 
+}
+
+bool db_add_entry(const char *title, const char *user,
+		const char *pass, const char *url, const char *note)
+{
+	int retval;
+	sqlite3 *db;
+	Entry_t *entry;
+	char *path;
+
+	path = read_path_from_lockfile();
+	
+	if(path == NULL) {
+		fprintf(stderr, "Database is encrypted or does not exists.\n");
+		return false;
+	}
+
+	if(!file_exists(path)) {
+		fprintf(stderr, "%s: does not exists\n", path);
+		free(path);
+		return false;
+	}
+
+	if(is_file_encrypted(path)) {
+		//This should not happen, ever
+		//If we can get get the path from the lockfile and it's encrypted
+		//there's something wrong. Lock file should not even exists when
+		//database is encrypted.
+		fprintf(stderr, "%s: is encrypted.\n", path);
+		free(path);
+		return false;
+	}
+
+	entry = create_new_entry(title, user, pass, url, note);
+
+	if(entry == NULL) {
+		fprintf(stderr, "Failed to create note\n");
+		free(path);
+		return false;
+	}
+	
+	retval = sqlite3_open(path, &db);
+
+	if(retval) {
+		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
+		free(path);
+		return false;
+	}
+	
+	if(!entry_add(db, entry))
+		fprintf(stderr, "Adding new entry failed\n");
+	
+	
+	entry_free(entry);
+
+	sqlite3_close(db);
+	free(path);
+	
+	return true;
+}

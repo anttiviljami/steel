@@ -87,13 +87,14 @@ int main(int argc, char *argv[])
 			{"replace",        required_argument, 0, 'r'},
 			{"find",           required_argument, 0, 'f'},
 			{"find-regex",     required_argument, 0, 'F'},
+			{"list-all",     required_argument, 0,   'l'},
 			{0, 0, 0, 0}
 
 		};
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:o:e:c:C:s:ga:d:r:f:F:", long_options,
+		option = getopt_long(argc, argv, "i:o:e:cC:s:ga:d:r:f:F:", long_options,
 				&option_index);
 
 		if(option == -1)
@@ -126,6 +127,8 @@ int main(int argc, char *argv[])
 		}
 		case 'e':
 			break;
+		case 'l':
+			break;
 		case 'c': {
 
 			char passphrase[pwdlen];
@@ -143,6 +146,7 @@ int main(int argc, char *argv[])
 		case 'g':
 			break;
 		case 'a':
+			db_add_entry("test","niko","1q2w3e","http://www.google.com","");
 			break;
 		case 'd':
 			break;

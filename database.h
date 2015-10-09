@@ -24,6 +24,9 @@
 bool db_init(const char *path, const char *passphrase);
 bool db_open(const char *path, const char *passphrase);
 void db_close(const char *passphrase);
-void db_export_text(const char *path);
+void db_export_text(const char *outpath);
+void db_list_all();
+bool db_add_entry(const char *title, const char *user,
+		const char *pass, const char *url, const char *note);
 
 #endif

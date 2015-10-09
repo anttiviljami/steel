@@ -18,7 +18,7 @@
  *
  */
 
-#ifndef __CRYPTO_H__
+#ifndef __CRYPTO_H
 #define __CRYPTO_H
 
 #define KEY_SIZE (32) //256 bits
@@ -29,7 +29,7 @@
 typedef struct Key
 {
 	//C99 does not support variable size
-	//arrays in file scope
+	//arrays in the file scope
 	
 	char data[32]; //KEY_SIZE
 	char salt[8];  //SALT_SIZE

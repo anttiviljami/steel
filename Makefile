@@ -5,8 +5,8 @@ LDFLAGS=-Lbcrypt -lmhash -lmcrypt -lsqlite3 -lbcrypt
 
 all: steel
 
-steel: bcrypt.a steel.o database.o entries.o crypto.o
-	$(CC) $(CFLAGS) steel.o database.o entries.o crypto.o -o steel $(LDFLAGS)
+steel: bcrypt.a steel.o entries.o database.o crypto.o
+	$(CC) $(CFLAGS) steel.o entries.o database.o crypto.o -o steel $(LDFLAGS)
 
 bcrypt.a:
 	cd bcrypt; $(MAKE)
