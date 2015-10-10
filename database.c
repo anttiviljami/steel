@@ -27,9 +27,13 @@
 #include <sqlite3.h>
 #include <sys/stat.h>
 
+
 #include "database.h"
-#include "entries.h"
 #include "crypto.h"
+
+
+static int cb_get_entries(void *list, int argc, char **argv, char **column_name);
+static int cb_get_next_id(void *id, int argc, char **argv, char **column_name);
 
 //Returns true is file exists and false if not.
 //Function should be portable.
@@ -178,7 +182,7 @@ bool db_init(const char *path, const char *passphrase)
 		"passphrase TEXT," \
 		"url TEXT," \
 		"notes TEXT," \
-		"id INTEGER PRIMARY KEY);";
+		"id INTEGER PRIMARY KEY AUTOINCREMENT);";
 
 	retval = sqlite3_exec(db, sql, NULL, 0, &error);
 
@@ -257,18 +261,13 @@ void db_export_text(const char *path)
 
 }
 
-void db_list_all()
+bool db_add_entry(Entry_t *entry)
 {
-
-}
-
-bool db_add_entry(const char *title, const char *user,
-		const char *pass, const char *url, const char *note)
-{
-	int retval;
+	int rc;
 	sqlite3 *db;
-	Entry_t *entry;
 	char *path;
+	char *error = NULL;
+	char *sql;
 
 	path = read_path_from_lockfile();
 	
@@ -293,30 +292,175 @@ bool db_add_entry(const char *title, const char *user,
 		return false;
 	}
 
-	entry = create_new_entry(title, user, pass, url, note);
+	rc = sqlite3_open(path, &db);
 
-	if(entry == NULL) {
-		fprintf(stderr, "Failed to create note\n");
-		free(path);
-		return false;
-	}
-	
-	retval = sqlite3_open(path, &db);
-
-	if(retval) {
+	if(rc) {
 		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
 		free(path);
 		return false;
 	}
 	
-	if(!entry_add(db, entry))
-		fprintf(stderr, "Adding new entry failed\n");
+	sql =
+	sqlite3_mprintf("insert into entries (title, user, passphrase, url, notes)" \
+			"values('%q','%q','%q','%q','%q')", entry->title, entry->user, 
+			entry->pwd, entry->url, entry->notes);
 	
-	
-	entry_free(entry);
+	rc = sqlite3_exec(db, sql, NULL, 0, &error);
+
+	if(rc != SQLITE_OK) {
+		fprintf(stderr, "Error: %s\n", error);
+		sqlite3_free(error);
+		free(sql);
+		free(path);
+		return false;
+	}
+
+	free(sql);
+	sqlite3_free(error);
 
 	sqlite3_close(db);
 	free(path);
 	
 	return true;
+}
+
+Entry_t *db_get_all_entries()
+{
+	char *path;
+	sqlite3 *db;
+	int rc;
+	char *sql;
+	char *error = NULL;
+	Entry_t *list = NULL;
+
+	path = read_path_from_lockfile();
+	
+	if(path == NULL) {
+		fprintf(stderr, "Database is encrypted or does not exists.\n");
+		return NULL;
+	}
+
+	if(!file_exists(path)) {
+		fprintf(stderr, "%s: does not exists\n", path);
+		free(path);
+		return NULL;
+	}
+
+	if(is_file_encrypted(path)) {
+		//This should not happen, ever
+		//If we can get get the path from the lockfile and it's encrypted
+		//there's something wrong. Lock file should not even exists when
+		//database is encrypted.
+		fprintf(stderr, "%s: is encrypted.\n", path);
+		free(path);
+		return NULL;
+	}
+
+	rc = sqlite3_open(path, &db);
+
+	if(rc) {
+		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
+		free(path);
+		return NULL;
+	}
+	
+	//First item in our list will be the column names. This makes there
+	//formatting easier during the output.
+	list = list_create("Title", "User", "Passphrase", "Url", "Notes", -1, NULL);
+	
+	sql = "select * from entries;";
+	rc = sqlite3_exec(db, sql, cb_get_entries, list, &error);
+
+	if(rc != SQLITE_OK) {
+		fprintf(stderr, "Error: %s\n", error);
+		sqlite3_free(error);
+		free(path);
+		return NULL;
+	}
+
+	sqlite3_close(db);
+	free(path);
+
+	return list;
+}
+
+int db_get_next_id()
+{
+	char *path;
+	sqlite3 *db;
+	int rc;
+	char *sql;
+	char *error = NULL;
+	int id = -1;
+
+	path = read_path_from_lockfile();
+	
+	if(path == NULL) {
+		fprintf(stderr, "Database is encrypted or does not exists.\n");
+		return NULL;
+	}
+
+	if(!file_exists(path)) {
+		fprintf(stderr, "%s: does not exists\n", path);
+		free(path);
+		return NULL;
+	}
+
+	if(is_file_encrypted(path)) {
+		//This should not happen, ever
+		//If we can get get the path from the lockfile and it's encrypted
+		//there's something wrong. Lock file should not even exists when
+		//database is encrypted.
+		fprintf(stderr, "%s: is encrypted.\n", path);
+		free(path);
+		return NULL;
+	}
+
+	rc = sqlite3_open(path, &db);
+
+	if(rc) {
+		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
+		free(path);
+		return NULL;
+	}
+	
+	//This will get us the last available auto increment id
+	sql = "select * from sqlite_sequence where name='entries';";
+	
+	rc = sqlite3_exec(db, sql, cb_get_next_id, &id, &error);
+
+	if(rc != SQLITE_OK) {
+		fprintf(stderr, "Error: %s\n", error);
+		sqlite3_free(error);
+		free(path);
+		return NULL;
+	}
+
+	sqlite3_close(db);
+	free(path);
+
+	//Plus one to get the next one, not the last one.
+	return id + 1;
+	
+}
+
+//Database actions callback functions
+static int cb_get_entries(void *list, int argc, char **argv, char **column_name)
+{	
+	//Insert entries into the list
+	list_add(list, argv[0], argv[1], argv[2], argv[3], argv[4], atoi(argv[5]));
+
+	return 0;	
+}
+
+static int cb_get_next_id(void *id, int argc, char **argv, char **column_name)
+{	
+	for(int i = 0; i < argc; i++) {
+		if(strcmp(column_name[i], "seq") == 0) {
+			//Assing the value(int) of the column to our void pointer.
+			(*(int*)id) = atoi(argv[i]);
+		}
+	}
+	
+	return 0;	
 }

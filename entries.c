@@ -25,119 +25,197 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <sqlite3.h>
-
 #include "entries.h"
 
-Entry_t *create_new_entry(const char *title, const char *user,
-			const char *pass, const char *url, const char *notes)
+Entry_t *list_create(const char *title, const char *user,
+			const char *pass, const char *url, const char *notes,
+                        int id, Entry_t *next)
 {
-	Entry_t *entry;
+	Entry_t *list = NULL;
 
-	entry = malloc(sizeof(Entry_t));
+	list = malloc(sizeof(Entry_t));
 	
-	if(entry == NULL) {
+	if(list == NULL) {
 		fprintf(stderr, "Malloc failed\n");
 		return NULL;
 	}
+	
+	list->title = strdup(title);
+	list->user = strdup(user);
+	list->pwd = strdup(pass);
+	list->url = strdup(url);
+	list->notes = strdup(notes);
+	list->id = id;
+	
+        list->next = next;
 
-	entry->title = strdup(title);
-	entry->user = strdup(user);
-	entry->pwd = strdup(pass);
-	entry->url = strdup(url);
-	entry->notes = strdup(notes);
-
-	return entry;
+	return list;
 }
 
-void entry_free(Entry_t *entry)
+Entry_t *list_add(Entry_t *list, const char *title, const char *user,
+			const char *pass, const char *url, const char *notes,
+                        int id)
 {
-	free(entry->title);
-	free(entry->user);
-	free(entry->pwd);
-	free(entry->url);
-	free(entry->notes);
-
-	free(entry);
+	if(list == NULL)
+		return list_create(title, user, pass, url, notes, id, NULL);
+	
+	Entry_t *cursor = list;
+	
+	while(cursor->next != NULL)
+		cursor = cursor->next;
+		
+	Entry_t *newlist = list_create(title, user, pass, url, notes, id, NULL);
+	cursor->next = newlist;
+        
+	return list;
 }
 
-bool entry_add(sqlite3 *db, Entry_t *entry)
+Entry_t *list_search_by_title(Entry_t *list, const char *title)
 {
-	char *error = NULL;
-	char *sql;
-	int rc;
-
-	sql =
-	sqlite3_mprintf("insert into entries (title, user, passphrase, url, notes)" \
-			"values('%q','%q','%q','%q','%q')", entry->title, entry->user, entry->pwd, entry->url,
-			entry->notes);
-
-
-	rc = sqlite3_exec(db, sql, NULL, 0, &error);
-
-	if(rc != SQLITE_OK) {
-		fprintf(stderr, "Error: %s\n", error);
-		sqlite3_free(error);
-		free(sql);
-		return false;
+	Entry_t *cursor = list;
+	
+	while(cursor != NULL) {
+        
+		if(strcmp(cursor->title, title) == 0)
+			return cursor;
+		
+		cursor = cursor->next;
 	}
 
-	free(sql);
-	sqlite3_free(error);
-	
-	return true;
+	return NULL;
 }
 
-bool entry_remove(sqlite3 *db, int id)
+Entry_t *list_search_by_id(Entry_t *list, int id)
 {
-	char *error;
-	int rc;
-	char *sql;
-
+	Entry_t *cursor = list;
 	
-	
-	return false;
-}
-
-Entry_t *entry_find(const char *searchterm)
-{
+	while(cursor != NULL) {
+        
+		if(cursor->id == id)
+			return cursor;
+		
+		cursor = cursor->next;
+	}
 
 	return NULL;
 }
 
-void entry_display_by_title(sqlite3 *db, const char *title)
+Entry_t *list_delete_by_id(Entry_t *list, int id)
 {
-
-
+	Entry_t *del = NULL;
+	
+	del = list_search_by_id(list, id);
+	
+	if(del == NULL) {
+		return NULL;
+	}
+	
+	list_remove(list, del);
+	
+	return list;
 }
 
-void entry_display_pwd_by_title(sqlite3 *db, const char *title)
+static Entry_t* remove_front(Entry_t* list)
 {
-
-
+	if(list == NULL)
+		return NULL;
+	
+	Entry_t *front = list;
+	list = list->next;
+	front->next = NULL;
+	
+	/* is this the last node in the list */
+	if(front == list)
+		list = NULL;
+	
+	free(front);
+	
+	return list;
 }
 
-void entry_display_by_id(sqlite3 *db, int id)
+static Entry_t *remove_back(Entry_t* list)
 {
-
-
+	if(list == NULL)
+		return NULL;
+	
+	Entry_t *cursor = list;
+	Entry_t *back = NULL;
+	
+	while(cursor->next != NULL)
+	{
+		back = cursor;
+		cursor = cursor->next;
+	}
+	if(back != NULL)
+		back->next = NULL;
+	
+	/* if this is the last node in the list*/
+	if(cursor == list)
+		list = NULL;
+	
+	free(cursor);
+	
+	return list;
 }
 
-void entry_display_pwd_by_id(sqlite3 *db, int id)
+Entry_t *list_remove(Entry_t *list, Entry_t *nd)
 {
-
-
+	if(list == nd) {
+		list = remove_front(list);
+		return list;
+	}
+	
+	if(nd->next == NULL) {
+		list = remove_back(list);
+		return list;
+	}
+	
+	Entry_t *cursor = list;
+	
+	while(cursor != NULL) {
+		
+		if(cursor->next == nd)
+			break;
+		
+		cursor = cursor->next;
+	}
+	
+	if(cursor != NULL) {
+		
+		Entry_t *tmp = cursor->next;
+		cursor->next = tmp->next;
+		tmp->next = NULL;
+		free(tmp);
+	}
+	
+	return list;
 }
 
-Entry_t entry_get_by_id(sqlite3 *db, int id)
-{
-	Entry_t t;
-	return t;
-
+void list_free(Entry_t *list)
+{	
+	Entry_t *cursor;
+	
+	while(list != NULL) {
+		cursor = list;
+		list = list->next;
+		free(cursor->title);
+		free(cursor->user);
+		free(cursor->pwd);
+		free(cursor->url);
+		free(cursor->notes);
+		free(cursor);
+	}
 }
 
-const char * entry_get_pwd_by_id(sqlite3 *db, int id)
+void list_print(Entry_t *list)
 {
+	Entry_t *tmp = list;
+	
+	while(tmp != NULL) {
 
-	return NULL;
+		printf("%s %s %s %s %s\n",
+		       tmp->title, tmp->user, tmp->pwd, tmp->url, tmp->notes);
+		
+		tmp = tmp->next;
+	}
 }

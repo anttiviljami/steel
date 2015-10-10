@@ -27,7 +27,7 @@
 #include <getopt.h>
 #include <termios.h>
 
-#include "database.h"
+#include "cmd_ui.h"
 
 #define PWD_PROMPT "Master passphrase: "
 
@@ -87,14 +87,14 @@ int main(int argc, char *argv[])
 			{"replace",        required_argument, 0, 'r'},
 			{"find",           required_argument, 0, 'f'},
 			{"find-regex",     required_argument, 0, 'F'},
-			{"list-all",     required_argument, 0,   'l'},
+			{"list-all",       no_argument,       0, 'l'},
 			{0, 0, 0, 0}
 
 		};
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:o:e:cC:s:ga:d:r:f:F:", long_options,
+		option = getopt_long(argc, argv, "i:o:e:cC:s:ga:d:r:f:F:l", long_options,
 				&option_index);
 
 		if(option == -1)
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
 			my_getpass(PWD_PROMPT, &ptr, &pwdlen, stdin);
 			
-			if(!db_init(optarg, passphrase))
+			if(!init_database(optarg, passphrase))
 				return 0;
 		
 			break;
@@ -120,14 +120,12 @@ int main(int argc, char *argv[])
 
 			my_getpass(PWD_PROMPT, &ptr, &pwdlen, stdin);
 			
-			if(!db_open(optarg, passphrase))
+			if(!open_database(optarg, passphrase))
 				return 0;
 		
 			break;
 		}
 		case 'e':
-			break;
-		case 'l':
 			break;
 		case 'c': {
 
@@ -135,7 +133,7 @@ int main(int argc, char *argv[])
 			char *ptr = passphrase;
 
 			my_getpass(PWD_PROMPT, &ptr, &pwdlen, stdin);
-			db_close(passphrase);
+			close_database(passphrase);
 		
 			break;
 		}
@@ -146,7 +144,7 @@ int main(int argc, char *argv[])
 		case 'g':
 			break;
 		case 'a':
-			db_add_entry("test","niko","1q2w3e","http://www.google.com","");
+			add_new_entry("test","niko","1q2w3e","http://www.google.com","my notes");
 			break;
 		case 'd':
 			break;
@@ -155,6 +153,9 @@ int main(int argc, char *argv[])
 		case 'f':
 			break;
 		case 'F':
+			break;
+		case 'l':
+			show_all_entries();
 			break;
 		}
 

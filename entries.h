@@ -28,22 +28,30 @@ typedef struct Entry {
 	char *pwd;
 	char *url;
 	char *notes;
+        int id;
+
+	struct Entry *next;
 
 } Entry_t;
 
-Entry_t *create_new_entry(const char *title, const char *user,
-			const char *pass, const char *url, const char *notes);
-void entry_free(Entry_t *entry);
+Entry_t *list_create(const char *title, const char *user,
+			const char *pass, const char *url, const char *notes,
+                        int id, Entry_t *next);
+Entry_t *list_add(Entry_t *list, const char *title, const char *user,
+			const char *pass, const char *url, const char *notes,
+                        int id);
 
-bool entry_add(sqlite3 *db, Entry_t *entry);
-bool entry_remove(sqlite3 *db, int id);
-Entry_t *entry_find(const char *searchterm);
-void entry_display_by_title(sqlite3 *db, const char *title);
-void entry_display_pwd_by_title(sqlite3 *db, const char *title);
-void entry_display_by_id(sqlite3 *db, int id);
-void entry_display_pwd_by_id(sqlite3 *db, int id);
-Entry_t entry_get_by_id(sqlite3 *db, int id);
-const char * entry_get_pwd_by_id(sqlite3 *db, int id);
+Entry_t *list_search_by_title(Entry_t *list, const char *title);
+Entry_t *list_search_by_id(Entry_t *list, int id);
+
+Entry_t *list_delete_by_id(Entry_t *list, int id);
+
+Entry_t *list_remove(Entry_t *list, Entry_t *nd);
+void list_free(Entry_t *list);
+void list_print(Entry_t *list);
+
+
+
 
 
 #endif

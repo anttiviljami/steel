@@ -18,18 +18,14 @@
  *
  */
 
-#ifndef __DATABASE_H
-#define __DATABASE_H
+#ifndef __CMD_UI_H
+#define __CMD_UI_H
 
-#include "entries.h"
-
-bool db_init(const char *path, const char *passphrase);
-bool db_open(const char *path, const char *passphrase);
-void db_close(const char *passphrase);
-
-int db_get_next_id();
-bool db_add_entry(Entry_t *entry);
-Entry_t *db_get_all_entries();
-void db_export_text(const char *outpath);
+bool add_new_entry(const char *title, const char *user, const char *pass,
+		   const char *url, const char *note);
+bool init_database(const char *path, const char *passphrase);
+bool open_database(const char *path, const char *passphrase);
+void close_database(const char *passphrase);
+void show_all_entries();
 
 #endif
