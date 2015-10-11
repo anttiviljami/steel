@@ -27,5 +27,8 @@ bool init_database(const char *path, const char *passphrase);
 bool open_database(const char *path, const char *passphrase);
 void close_database(const char *passphrase);
 void show_all_entries();
+void show_one_entry(int id);
+void delete_entry(int id);
+void find_entries(const char *search);
 
 #endif

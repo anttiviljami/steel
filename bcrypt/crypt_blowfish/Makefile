@@ -38,7 +38,7 @@ EXTRA_MANS = \
 	crypt_r.3 crypt_rn.3 crypt_ra.3 \
 	crypt_gensalt.3 crypt_gensalt_rn.3 crypt_gensalt_ra.3
 
-all: $(CRYPT_OBJS) man
+all: $(CRYPT_OBJS)
 
 check: crypt_test
 	./crypt_test
@@ -57,11 +57,6 @@ crypt_test_threads: $(TEST_THREADS_OBJS)
 
 crypt_test_threads.o: wrapper.c ow-crypt.h crypt_blowfish.h crypt_gensalt.h
 	$(CC) -c $(CFLAGS) wrapper.c -DTEST -DTEST_THREADS=4 -o $@
-
-man: $(EXTRA_MANS)
-
-$(EXTRA_MANS):
-	echo '.so man3/crypt.3' > $@
 
 crypt_blowfish.o: crypt_blowfish.h
 crypt_gensalt.o: crypt_gensalt.h

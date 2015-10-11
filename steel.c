@@ -77,16 +77,14 @@ int main(int argc, char *argv[])
 		{
 			{"init-new",       required_argument, 0, 'i'},
 			{"open",           required_argument, 0, 'o'},
-			{"export",         required_argument, 0, 'e'},
 			{"close",          no_argument,       0, 'c'},
-			{"copy",           required_argument, 0, 'C'},
 			{"show",           required_argument, 0, 's'},
-			{"gen-pass",       no_argument,       0, 'g'},
+			{"gen-pass",       no_argument,       0, 'g'}, //todo
 			{"add",            required_argument, 0, 'a'},
 			{"delete",         required_argument, 0, 'd'},
-			{"replace",        required_argument, 0, 'r'},
+			{"replace",        required_argument, 0, 'r'}, //todo
 			{"find",           required_argument, 0, 'f'},
-			{"find-regex",     required_argument, 0, 'F'},
+			{"find-regex",     required_argument, 0, 'F'}, //todo
 			{"list-all",       no_argument,       0, 'l'},
 			{0, 0, 0, 0}
 
@@ -94,7 +92,7 @@ int main(int argc, char *argv[])
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:o:e:cC:s:ga:d:r:f:F:l", long_options,
+		option = getopt_long(argc, argv, "i:o:cs:ga:d:r:f:F:l", long_options,
 				&option_index);
 
 		if(option == -1)
@@ -125,8 +123,6 @@ int main(int argc, char *argv[])
 		
 			break;
 		}
-		case 'e':
-			break;
 		case 'c': {
 
 			char passphrase[pwdlen];
@@ -137,20 +133,21 @@ int main(int argc, char *argv[])
 		
 			break;
 		}
-		case 'C':
-			break;
 		case 's':
+			show_one_entry(atoi(optarg));
 			break;
 		case 'g':
 			break;
 		case 'a':
-			add_new_entry("test","niko","1q2w3e","http://www.google.com","my notes");
+			add_new_entry("test","nikorosvall@foo.com","1q2w3ee3w2q1","http://byteptr.com","my notes sdasdasd sad");
 			break;
 		case 'd':
+			delete_entry(atoi(optarg));
 			break;
 		case 'r':
 			break;
 		case 'f':
+			find_entries(optarg);
 			break;
 		case 'F':
 			break;

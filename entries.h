@@ -49,7 +49,7 @@ Entry_t *list_delete_by_id(Entry_t *list, int id);
 Entry_t *list_remove(Entry_t *list, Entry_t *nd);
 void list_free(Entry_t *list);
 void list_print(Entry_t *list);
-
+void list_print_one(Entry_t *cursor);
 
 
 

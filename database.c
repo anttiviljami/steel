@@ -34,6 +34,7 @@
 
 static int cb_get_entries(void *list, int argc, char **argv, char **column_name);
 static int cb_get_next_id(void *id, int argc, char **argv, char **column_name);
+static int cb_get_by_id(void *list, int argc, char **argv, char **column_name);
 
 //Returns true is file exists and false if not.
 //Function should be portable.
@@ -256,21 +257,8 @@ void db_close(const char *passphrase)
 	free(path);
 }
 
-void db_export_text(const char *path)
-{
-
-}
-
-bool db_add_entry(Entry_t *entry)
-{
-	int rc;
-	sqlite3 *db;
-	char *path;
-	char *error = NULL;
-	char *sql;
-
-	path = read_path_from_lockfile();
-	
+static bool db_make_sanity_check(char *path)
+{	
 	if(path == NULL) {
 		fprintf(stderr, "Database is encrypted or does not exists.\n");
 		return false;
@@ -289,6 +277,27 @@ bool db_add_entry(Entry_t *entry)
 		//database is encrypted.
 		fprintf(stderr, "%s: is encrypted.\n", path);
 		free(path);
+		return false;
+	}
+	
+	return true;
+}
+
+bool db_add_entry(Entry_t *entry)
+{
+	int rc;
+	sqlite3 *db;
+	char *path = NULL;
+	char *error = NULL;
+	char *sql;
+
+	path = read_path_from_lockfile();
+	
+	if(!db_make_sanity_check(path)) {
+		
+		if(path != NULL)
+			free(path);
+		
 		return false;
 	}
 
@@ -326,7 +335,7 @@ bool db_add_entry(Entry_t *entry)
 
 Entry_t *db_get_all_entries()
 {
-	char *path;
+	char *path = NULL;
 	sqlite3 *db;
 	int rc;
 	char *sql;
@@ -335,24 +344,11 @@ Entry_t *db_get_all_entries()
 
 	path = read_path_from_lockfile();
 	
-	if(path == NULL) {
-		fprintf(stderr, "Database is encrypted or does not exists.\n");
-		return NULL;
-	}
-
-	if(!file_exists(path)) {
-		fprintf(stderr, "%s: does not exists\n", path);
-		free(path);
-		return NULL;
-	}
-
-	if(is_file_encrypted(path)) {
-		//This should not happen, ever
-		//If we can get get the path from the lockfile and it's encrypted
-		//there's something wrong. Lock file should not even exists when
-		//database is encrypted.
-		fprintf(stderr, "%s: is encrypted.\n", path);
-		free(path);
+	if(!db_make_sanity_check(path)) {
+		
+		if(path != NULL)
+			free(path);
+		
 		return NULL;
 	}
 
@@ -366,7 +362,7 @@ Entry_t *db_get_all_entries()
 	
 	//First item in our list will be the column names. This makes there
 	//formatting easier during the output.
-	list = list_create("Title", "User", "Passphrase", "Url", "Notes", -1, NULL);
+	list = list_create("Title", "User", "Passphrase", "Address", "Id", -1, NULL);
 	
 	sql = "select * from entries;";
 	rc = sqlite3_exec(db, sql, cb_get_entries, list, &error);
@@ -386,7 +382,7 @@ Entry_t *db_get_all_entries()
 
 int db_get_next_id()
 {
-	char *path;
+	char *path = NULL;
 	sqlite3 *db;
 	int rc;
 	char *sql;
@@ -395,25 +391,12 @@ int db_get_next_id()
 
 	path = read_path_from_lockfile();
 	
-	if(path == NULL) {
-		fprintf(stderr, "Database is encrypted or does not exists.\n");
-		return NULL;
-	}
-
-	if(!file_exists(path)) {
-		fprintf(stderr, "%s: does not exists\n", path);
-		free(path);
-		return NULL;
-	}
-
-	if(is_file_encrypted(path)) {
-		//This should not happen, ever
-		//If we can get get the path from the lockfile and it's encrypted
-		//there's something wrong. Lock file should not even exists when
-		//database is encrypted.
-		fprintf(stderr, "%s: is encrypted.\n", path);
-		free(path);
-		return NULL;
+	if(!db_make_sanity_check(path)) {
+		
+		if(path != NULL)
+			free(path);
+		
+		return -1;
 	}
 
 	rc = sqlite3_open(path, &db);
@@ -441,6 +424,103 @@ int db_get_next_id()
 
 	//Plus one to get the next one, not the last one.
 	return id + 1;
+}
+
+Entry_t *db_get_entry_by_id(int id)
+{
+	char *path = NULL;
+	sqlite3 *db;
+	int rc;
+	char *sql;
+	char *error = NULL;
+	Entry_t *list = NULL;
+	
+	path = read_path_from_lockfile();
+	
+	if(!db_make_sanity_check(path)) {
+		
+		if(path != NULL)
+			free(path);
+		
+		return NULL;
+	}
+	
+	rc = sqlite3_open(path, &db);
+
+	if(rc) {
+		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
+		free(path);
+		return NULL;
+	}
+	
+	sql =
+	sqlite3_mprintf("select * from entries where id=%d;", id);
+
+	list = list_create("Title", "User", "Passphrase", "Address", "Id", -1, NULL);
+	
+	rc = sqlite3_exec(db, sql, cb_get_by_id, list, &error);
+
+	if(rc != SQLITE_OK) {
+		fprintf(stderr, "Error: %s\n", error);
+		sqlite3_free(error);
+		free(path);
+		return NULL;
+	}
+
+	sqlite3_close(db);
+	free(path);
+	
+	return list;
+}
+
+bool db_delete_entry_by_id(int id, bool *success)
+{
+	char *path = NULL;
+	sqlite3 *db;
+	int rc;
+	char *sql;
+	char *error = NULL;
+	int count;
+	
+	path = read_path_from_lockfile();
+	
+	if(!db_make_sanity_check(path)) {
+		
+		if(path != NULL)
+			free(path);
+		
+		return false;
+	}
+	
+	rc = sqlite3_open(path, &db);
+
+	if(rc) {
+		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
+		free(path);
+		return false;
+	}
+	
+	sql =
+	sqlite3_mprintf("delete from entries where id=%d;", id);
+
+	rc = sqlite3_exec(db, sql, NULL, 0, &error);
+
+	if(rc != SQLITE_OK) {
+		fprintf(stderr, "Error: %s\n", error);
+		sqlite3_free(error);
+		free(path);
+		return false;
+	}
+
+	count = sqlite3_changes(db);
+	
+	if(count > 0)
+		*success = true;
+	
+	sqlite3_close(db);
+	free(path);
+	
+	return true;
 	
 }
 
@@ -464,3 +544,13 @@ static int cb_get_next_id(void *id, int argc, char **argv, char **column_name)
 	
 	return 0;	
 }
+
+static int cb_get_by_id(void *list, int argc, char **argv, char **column_name)
+{
+	
+	list_add(list, argv[0], argv[1], argv[2], argv[3], argv[4], atoi(argv[5]));
+	
+	return 0;
+}
+
+//End database callback functions

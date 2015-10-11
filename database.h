@@ -30,6 +30,7 @@ void db_close(const char *passphrase);
 int db_get_next_id();
 bool db_add_entry(Entry_t *entry);
 Entry_t *db_get_all_entries();
-void db_export_text(const char *outpath);
+Entry_t *db_get_entry_by_id(int id);
+bool db_delete_entry_by_id(int id, bool *success);
 
 #endif

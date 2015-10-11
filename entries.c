@@ -23,7 +23,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include "entries.h"
 
@@ -209,13 +208,78 @@ void list_free(Entry_t *list)
 
 void list_print(Entry_t *list)
 {
+	//Take copies of the head pointer.
 	Entry_t *tmp = list;
+	Entry_t *tmp2 = list;
 	
+	int len;
+	
+	//Calculate the longest string in the list.
+	//It's used to align the output.
 	while(tmp != NULL) {
 
-		printf("%s %s %s %s %s\n",
-		       tmp->title, tmp->user, tmp->pwd, tmp->url, tmp->notes);
+		len = strlen(tmp->title);
+		
+		if(len < strlen(tmp->user))
+			len = strlen(tmp->user);
+		if(len < strlen(tmp->pwd))
+			len = strlen(tmp->pwd);
+		if(len < strlen(tmp->url))
+			len = strlen(tmp->url);
 		
 		tmp = tmp->next;
 	}
+	
+	while(tmp2 != NULL) {
+		
+		//If id is -1 it's our information column with column names
+		//Print them. Otherwise print the actual id number instead of
+		//the column name.
+		if(tmp2->id == -1) {
+			printf("%s\t%-*s %-*s %-*s\t%-*s\n",
+			tmp2->title,len, tmp2->user,len, tmp2->pwd, len, tmp2->url, 
+			len, tmp2->notes);
+		}
+		else {
+			printf("%s\t%-*s %-*s %-*s\t%-*d\n",
+			tmp2->title,len, tmp2->user,len, tmp2->pwd, len, tmp2->url, 
+			len, tmp2->id);
+		}
+		
+		tmp2 = tmp2->next;
+	}
+}
+
+//Method calculates longest string from
+//current list cursor and returns it.
+//If the cursor is null, -1 is returned.
+static int list_calculate_longest_str_cursor(Entry_t *cursor)
+{
+	int len;
+	
+	if(cursor == NULL)
+		return -1;
+	
+	len = strlen(cursor->title);
+		
+	if(len < strlen(cursor->user))
+		len = strlen(cursor->user);
+	if(len < strlen(cursor->pwd))
+		len = strlen(cursor->pwd);
+	if(len < strlen(cursor->url))
+		len = strlen(cursor->url);
+	
+	return len;
+}
+
+void list_print_one(Entry_t *cursor)
+{
+	int len = list_calculate_longest_str_cursor(cursor);
+	
+	if(len == -1)
+		return;
+	
+	
+	printf("%s\t%-*s %-*s %-*s\t%-*d\n", cursor->title, len, cursor->user,len, 
+	       cursor->pwd, len, cursor->url, len, cursor->id);
 }
