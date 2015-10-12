@@ -206,56 +206,13 @@ void list_free(Entry_t *list)
 	}
 }
 
-void list_print(Entry_t *list)
-{
-	//Take copies of the head pointer.
-	Entry_t *tmp = list;
-	Entry_t *tmp2 = list;
-	
-	int len;
-	
-	//Calculate the longest string in the list.
-	//It's used to align the output.
-	while(tmp != NULL) {
-
-		len = strlen(tmp->title);
-		
-		if(len < strlen(tmp->user))
-			len = strlen(tmp->user);
-		if(len < strlen(tmp->pwd))
-			len = strlen(tmp->pwd);
-		if(len < strlen(tmp->url))
-			len = strlen(tmp->url);
-		
-		tmp = tmp->next;
-	}
-	
-	while(tmp2 != NULL) {
-		
-		//If id is -1 it's our information column with column names
-		//Print them. Otherwise print the actual id number instead of
-		//the column name.
-		if(tmp2->id == -1) {
-			printf("%s\t%-*s %-*s %-*s\t%-*s\n",
-			tmp2->title,len, tmp2->user,len, tmp2->pwd, len, tmp2->url, 
-			len, tmp2->notes);
-		}
-		else {
-			printf("%s\t%-*s %-*s %-*s\t%-*d\n",
-			tmp2->title,len, tmp2->user,len, tmp2->pwd, len, tmp2->url, 
-			len, tmp2->id);
-		}
-		
-		tmp2 = tmp2->next;
-	}
-}
-
 //Method calculates longest string from
 //current list cursor and returns it.
 //If the cursor is null, -1 is returned.
-static int list_calculate_longest_str_cursor(Entry_t *cursor)
+static int list_calculate_longest_str_cursor(Entry_t *entry)
 {
 	int len;
+	Entry_t *cursor = entry;
 	
 	if(cursor == NULL)
 		return -1;
@@ -272,14 +229,70 @@ static int list_calculate_longest_str_cursor(Entry_t *cursor)
 	return len;
 }
 
+//Calculate longest string in the list.
+static int list_calculate_longest_str(Entry_t *list)
+{
+	int len = 0;
+	int cursorlen = 0;
+	
+	Entry_t *cursor = list;
+	
+	while(cursor != NULL) {
+		
+		cursorlen = list_calculate_longest_str_cursor(cursor);
+		
+		if(len < cursorlen)
+			len = cursorlen;
+		
+		cursor = cursor->next;
+	}
+	
+	return len;
+}
+
+void list_print(Entry_t *list)
+{
+	//Take copies of the head pointer.
+	Entry_t *tmp = list->next;
+	int len = list_calculate_longest_str(tmp) + 18;
+	
+	printf("\n");
+	
+	while(tmp != NULL) {
+	
+		printf("%s\t\t%d\n", "Id", tmp->id);
+		printf("%s\t\t%s\n", "Title", tmp->title);
+		printf("%s\t%s\n", "Username", tmp->user);
+		printf("%s\t%s\n", "Passphrase", tmp->pwd);
+		printf("%s\t\t%s\n", "Address", tmp->url);
+		
+		for(int i = 0; i < len; i++)
+			printf("-");
+		
+		printf("\n");
+		
+		tmp = tmp->next;
+	}
+}
+
 void list_print_one(Entry_t *cursor)
 {
 	int len = list_calculate_longest_str_cursor(cursor);
 	
+	len += 18;
+	
 	if(len == -1)
 		return;
 	
+	printf("\n");
+	printf("%s\t\t%d\n", "Id", cursor->id);
+	printf("%s\t\t%s\n", "Title", cursor->title);
+	printf("%s\t%s\n", "Username", cursor->user);
+	printf("%s\t%s\n", "Passphrase", cursor->pwd);
+	printf("%s\t\t%s\n", "Address", cursor->url);
 	
-	printf("%s\t%-*s %-*s %-*s\t%-*d\n", cursor->title, len, cursor->user,len, 
-	       cursor->pwd, len, cursor->url, len, cursor->id);
+	for(int i = 0; i < len; i++)
+		printf("-");
+	
+	printf("\n");
 }

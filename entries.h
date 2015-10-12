@@ -51,7 +51,4 @@ void list_free(Entry_t *list);
 void list_print(Entry_t *list);
 void list_print_one(Entry_t *cursor);
 
-
-
-
 #endif

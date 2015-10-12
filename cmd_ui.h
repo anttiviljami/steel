@@ -21,8 +21,11 @@
 #ifndef __CMD_UI_H
 #define __CMD_UI_H
 
-bool add_new_entry(const char *title, const char *user, const char *pass,
-		   const char *url, const char *note);
+#define MASTER_PWD_PROMPT "Master passphrase: "
+#define ENTRY_PWD_PROMPT "Enter new passphrase: "
+#define ENTRY_PWD_PROMPT_RETRY "Retype new passphrase: "
+
+void add_new_entry(char *title, char *user, char *url);
 bool init_database(const char *path, const char *passphrase);
 bool open_database(const char *path, const char *passphrase);
 void close_database(const char *passphrase);
@@ -30,5 +33,6 @@ void show_all_entries();
 void show_one_entry(int id);
 void delete_entry(int id);
 void find_entries(const char *search);
+size_t my_getpass(char *prompt, char **lineptr, size_t *n, FILE *stream);
 
 #endif

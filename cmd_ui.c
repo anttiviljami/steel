@@ -18,29 +18,44 @@
  *
  */
 
+#define _XOPEN_SOURCE 700
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <termios.h>
 #include "database.h"
 #include "cmd_ui.h"
 
 
-bool add_new_entry(const char *title, const char *user, const char *pass,
-		   const char *url, const char *note)
+void add_new_entry(char *title, char *user, char *url)
 {
-	int id = db_get_next_id();
+	int id;
+	size_t pwdlen = 255;
+	char pass[pwdlen];
+	char *ptr = pass;
+	char pass2[pwdlen];
+	char *ptr2 = pass2;
+	
+	my_getpass(ENTRY_PWD_PROMPT, &ptr, &pwdlen, stdin);
+	my_getpass(ENTRY_PWD_PROMPT_RETRY, &ptr2, &pwdlen, stdin);
+	
+	if(strcmp(pass, pass2) != 0) {
+		fprintf(stderr, "Passphrases do not match.\n");
+		return;
+	}
+	
+	id = db_get_next_id();
 		
-	Entry_t *entry = list_create(title, user, pass, url, note, id, NULL);
+	Entry_t *entry = list_create(title, user, pass, url, "", id, NULL);
 
 	if(!db_add_entry(entry)) {
 		fprintf(stderr, "Failed to add a new entry.\n");
-		return false;
+		return;
 	}
 	
 	list_free(entry);
-	
-	return true;
 }
 
 bool init_database(const char *path, const char *passphrase)
@@ -77,8 +92,7 @@ void show_one_entry(int id)
 		next = head->next;
 		
 		if(next != NULL) {
-			printf("%s\t%s\t%s\t%s\n",next->title, next->user,
-			       next->pwd, next->url);
+			list_print_one(next);
 		}
 		else {
 			printf("No entry found with id %d.\n", id);
@@ -107,15 +121,12 @@ void find_entries(const char *search)
 	Entry_t *new_head = list->next;
 	
 	while(new_head != NULL) {
-				
+		
+		//Search for matching data	
 		if(strstr(new_head->title, search) != NULL || 
 			strstr(new_head->user, search) != NULL ||
 			strstr(new_head->url, search) != NULL ||
 			strstr(new_head->notes, search) != NULL) {
-			
-			/*printf("%s\t%s\t%s\t%s\t%d\n",new_head->title, 
-				new_head->user, new_head->pwd, 
-				new_head->url, new_head->id);*/
 			
 			list_print_one(new_head);
 		}
@@ -124,4 +135,39 @@ void find_entries(const char *search)
 	}
 	
 	list_free(list);
+}
+
+size_t my_getpass(char *prompt, char **lineptr, size_t *n, FILE *stream)
+{
+    struct termios old, new;
+    int nread;
+
+    //Turn terminal echoing off.
+    if(tcgetattr(fileno(stream), &old) != 0)
+        return -1;
+    
+    new = old;
+    new.c_lflag &= ~ECHO;
+    
+    if(tcsetattr(fileno(stream), TCSAFLUSH, &new) != 0)
+        return -1;
+
+    if(prompt)
+        printf("%s", prompt);
+
+    //Read the password.
+    nread = getline(lineptr, n, stream);
+
+    if(nread >= 1 && (*lineptr)[nread - 1] == '\n')
+    {
+        (*lineptr)[nread - 1] = 0;
+        nread--;
+    }
+    
+    printf("\n");
+
+    //Restore terminal echo.
+    tcsetattr(fileno(stream), TCSAFLUSH, &old);
+
+    return nread;
 }
