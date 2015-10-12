@@ -31,7 +31,11 @@
 #include "database.h"
 #include "crypto.h"
 
+//File implements basic interface for using database operations
+//needed by Steel. It's designed in a way that it should be easy
+//to use from a gui too.
 
+//Database callback prototypes
 static int cb_get_entries(void *list, int argc, char **argv, char **column_name);
 static int cb_get_next_id(void *id, int argc, char **argv, char **column_name);
 static int cb_get_by_id(void *list, int argc, char **argv, char **column_name);
@@ -541,6 +545,9 @@ bool db_delete_entry_by_id(int id, bool *success)
 	
 }
 
+//Updates an entry in the database.
+//Entry with given is is simply updated with 
+//new data from the parameter entry. Returns true on success.
 bool db_update_entry(int id, Entry_t *entry)
 {
 	char *path = NULL;
