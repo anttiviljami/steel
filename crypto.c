@@ -641,3 +641,10 @@ bool decrypt_file(const char *path, const char *passphrase)
 	
 	return true;
 }
+
+char *generate_pass()
+{
+	
+
+	return NULL;
+}

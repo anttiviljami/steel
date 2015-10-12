@@ -26,6 +26,7 @@
 #include <string.h>
 #include <termios.h>
 #include "database.h"
+#include "crypto.h"
 #include "cmd_ui.h"
 
 //cmd_ui.c implements simple interface for command line version
@@ -193,6 +194,9 @@ size_t my_getpass(char *prompt, char **lineptr, size_t *n, FILE *stream)
     return nread;
 }
 
+//Replace part of an entry pointed by id. "What" tells the function what to replace
+//with the new data. What can be "passphrase", "user", "title", "url" or "notes".
+//Database must not be encrypted.
 void replace_part(int id, const char *what, const char *new_data)
 {
 	if(strcmp(what,"passphrase") != 0 && strcmp(what, "user") != 0
@@ -226,6 +230,8 @@ void replace_part(int id, const char *what, const char *new_data)
 	
 	if(strcmp(what, "passphrase") == 0) {
 		
+		//Ok, user want's to replace passphrase.
+		//Ask it, and verify it.
 		my_getpass(ENTRY_PWD_PROMPT, &ptr, &pwdlen, stdin);
 		my_getpass(ENTRY_PWD_PROMPT_RETRY, &ptr2, &pwdlen, stdin);
 	
@@ -259,4 +265,21 @@ void replace_part(int id, const char *what, const char *new_data)
 	db_update_entry(id, head);
 	
 	list_free(entry);
+}
+
+//Function generates new password and prints it to stdout.
+//Does not use the database, so this function can be called
+//even if the database is encrypted.
+void generate_password()
+{
+	char *pass = generate_pass();
+	
+	if(pass == NULL) {
+		fprintf(stderr, "Generating new password failed.\n");
+		return;
+	}
+	
+	printf("%s\n", pass);
+	
+	free(pass);
 }

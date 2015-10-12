@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <getopt.h>
 #include "cmd_ui.h"
 
@@ -50,7 +51,7 @@ int main(int argc, char *argv[])
 			{"gen-pass",       no_argument,       0, 'g'}, //todo
 			{"add",            required_argument, 0, 'a'},
 			{"delete",         required_argument, 0, 'd'},
-			{"replace",        required_argument, 0, 'r'}, //todo
+			{"replace",        required_argument, 0, 'r'},
 			{"find",           required_argument, 0, 'f'},
 			{"list-all",       no_argument,       0, 'l'},
 			{"version",        no_argument,       0, 'V'},
@@ -105,6 +106,7 @@ int main(int argc, char *argv[])
 			show_one_entry(atoi(optarg));
 			break;
 		case 'g':
+			generate_password();
 			break;
 		case 'a': {
 			//Has user?
@@ -127,7 +129,9 @@ int main(int argc, char *argv[])
 			char *user = argv[optind];
 			char *url = argv[optind + 1];
 			char *note = argv[optind + 2];
+			
 			add_new_entry(title, user, url, note);
+			
 			break;
 		}
 		case 'd':
