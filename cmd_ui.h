@@ -25,7 +25,7 @@
 #define ENTRY_PWD_PROMPT "Enter new passphrase: "
 #define ENTRY_PWD_PROMPT_RETRY "Retype new passphrase: "
 
-void add_new_entry(char *title, char *user, char *url);
+void add_new_entry(char *title, char *user, char *url, char *note);
 bool init_database(const char *path, const char *passphrase);
 bool open_database(const char *path, const char *passphrase);
 void close_database(const char *passphrase);

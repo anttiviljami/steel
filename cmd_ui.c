@@ -32,7 +32,7 @@
 //of Steel. All functions in here are only used from main()
 
 //This is called from main. Adds new entry to the database.
-void add_new_entry(char *title, char *user, char *url)
+void add_new_entry(char *title, char *user, char *url, char *note)
 {
 	int id;
 	//Should be enough...
@@ -52,7 +52,7 @@ void add_new_entry(char *title, char *user, char *url)
 	
 	id = db_get_next_id();
 		
-	Entry_t *entry = list_create(title, user, pass, url, "", id, NULL);
+	Entry_t *entry = list_create(title, user, pass, url, note, id, NULL);
 
 	if(!db_add_entry(entry)) {
 		fprintf(stderr, "Failed to add a new entry.\n");

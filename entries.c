@@ -53,7 +53,7 @@ Entry_t *list_create(const char *title, const char *user,
 	list->id = id;
 	
         list->next = next;
-
+	
 	return list;
 }
 
@@ -245,6 +245,8 @@ static int list_calculate_longest_str_cursor(Entry_t *entry)
 		len = strlen(cursor->pwd);
 	if(len < strlen(cursor->url))
 		len = strlen(cursor->url);
+	if(len < strlen(cursor->notes))
+		len = strlen(cursor->notes);
 	
 	return len;
 }
@@ -288,6 +290,7 @@ void list_print(Entry_t *list)
 		printf("%s\t%s\n", "Username", tmp->user);
 		printf("%s\t%s\n", "Passphrase", tmp->pwd);
 		printf("%s\t\t%s\n", "Address", tmp->url);
+		printf("%s\t\t%s\n", "Notes", tmp->notes);
 		
 		//Print separator line as long as the longest string
 		//in the list.
@@ -316,6 +319,7 @@ void list_print_one(Entry_t *cursor)
 	printf("%s\t%s\n", "Username", cursor->user);
 	printf("%s\t%s\n", "Passphrase", cursor->pwd);
 	printf("%s\t\t%s\n", "Address", cursor->url);
+	printf("%s\t\t%s\n", "Notes", cursor->notes);
 	
 	//Print separator line as long as the longest string in the current
 	//list cursor

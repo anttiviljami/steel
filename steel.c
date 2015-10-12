@@ -117,11 +117,17 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Missing option url.\n");
 				return 0;
 			}
+			//Has note?
+			if(!argv[optind + 2]) {
+				fprintf(stderr, "Missing option note\n");
+				return 0;
+			}
 			
 			char *title = optarg;
 			char *user = argv[optind];
 			char *url = argv[optind + 1];
-			add_new_entry(title, user, url);
+			char *note = argv[optind + 2];
+			add_new_entry(title, user, url, note);
 			break;
 		}
 		case 'd':
