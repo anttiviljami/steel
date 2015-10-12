@@ -34,5 +34,6 @@ void show_one_entry(int id);
 void delete_entry(int id);
 void find_entries(const char *search);
 size_t my_getpass(char *prompt, char **lineptr, size_t *n, FILE *stream);
+void replace_part(int id, const char *what, const char *new_data);
 
 #endif

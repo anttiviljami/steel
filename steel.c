@@ -52,15 +52,15 @@ int main(int argc, char *argv[])
 			{"delete",         required_argument, 0, 'd'},
 			{"replace",        required_argument, 0, 'r'}, //todo
 			{"find",           required_argument, 0, 'f'},
-			{"find-regex",     required_argument, 0, 'F'}, //todo
 			{"list-all",       no_argument,       0, 'l'},
+			{"version",        no_argument,       0, 'V'},
 			{0, 0, 0, 0}
 
 		};
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:o:cs:ga:d:r:f:F:l", long_options,
+		option = getopt_long(argc, argv, "i:o:cs:ga:d:r:f:lV", long_options,
 				&option_index);
 
 		if(option == -1)
@@ -133,15 +133,35 @@ int main(int argc, char *argv[])
 		case 'd':
 			delete_entry(atoi(optarg));
 			break;
-		case 'r':
+		case 'r': {
+			if(!argv[optind]) {
+				fprintf(stderr, "Missing option, see -h for help\n");
+				return 0;
+			}
+			
+			//Replacing passphrase does not need third argument
+			//It will be asked separately by replace_part()
+			if(strcmp(argv[optind], "passphrase") != 0) {
+				if(!argv[optind + 1]) {
+					fprintf(stderr, "Missing option, see -h for help\n");
+					return 0;
+				}
+			}
+			
+			int id = atoi(optarg);
+			char *what = argv[optind];
+			char *content = argv[optind + 1];
+			replace_part(id, what, content);
 			break;
+		}
 		case 'f':
 			find_entries(optarg);
 			break;
-		case 'F':
-			break;
 		case 'l':
 			show_all_entries();
+			break;
+		case 'V':
+			printf("Steel v%.1f Copyright (c) Niko Rosvall\n", VERSION);
 			break;
 		}
 

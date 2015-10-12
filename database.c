@@ -309,7 +309,7 @@ bool db_add_entry(Entry_t *entry)
 	rc = sqlite3_open(path, &db);
 
 	if(rc) {
-		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
+		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 		free(path);
 		return false;
 	}
@@ -363,7 +363,7 @@ Entry_t *db_get_all_entries()
 	rc = sqlite3_open(path, &db);
 
 	if(rc) {
-		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
+		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 		free(path);
 		return NULL;
 	}
@@ -413,7 +413,7 @@ int db_get_next_id()
 	rc = sqlite3_open(path, &db);
 
 	if(rc) {
-		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
+		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 		free(path);
 		return NULL;
 	}
@@ -461,7 +461,7 @@ Entry_t *db_get_entry_by_id(int id)
 	rc = sqlite3_open(path, &db);
 
 	if(rc) {
-		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
+		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 		free(path);
 		return NULL;
 	}
@@ -512,7 +512,7 @@ bool db_delete_entry_by_id(int id, bool *success)
 	rc = sqlite3_open(path, &db);
 
 	if(rc) {
-		fprintf(stderr, "Can't initialize: %s\n", sqlite3_errmsg(db));
+		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 		free(path);
 		return false;
 	}
@@ -540,6 +540,53 @@ bool db_delete_entry_by_id(int id, bool *success)
 	return true;
 	
 }
+
+bool db_update_entry(int id, Entry_t *entry)
+{
+	char *path = NULL;
+	sqlite3 *db;
+	int rc;
+	char *sql;
+	char *error = NULL;
+	
+	path = read_path_from_lockfile();
+	
+	if(!db_make_sanity_check(path)) {
+		
+		if(path != NULL)
+			free(path);
+		
+		return false;
+	}
+	
+	rc = sqlite3_open(path, &db);
+
+	if(rc) {
+		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+		free(path);
+		return false;
+	}
+	
+	sql =
+	sqlite3_mprintf("update entries set title='%q',user='%q',passphrase='%q'" \
+		",url='%q',notes='%q' where id=%d;", entry->title, 
+		 entry->user, entry->pwd, entry->url, entry->notes, id);
+	
+	rc = sqlite3_exec(db, sql, NULL, 0, &error);
+
+	if(rc != SQLITE_OK) {
+		fprintf(stderr, "Error: %s\n", error);
+		sqlite3_free(error);
+		free(path);
+		return false;
+	}
+	
+	sqlite3_close(db);
+	free(path);
+	
+	return true;
+}
+
 //***********************************
 //Database actions callback functions
 //***********************************

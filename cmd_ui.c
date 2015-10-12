@@ -192,3 +192,71 @@ size_t my_getpass(char *prompt, char **lineptr, size_t *n, FILE *stream)
 
     return nread;
 }
+
+void replace_part(int id, const char *what, const char *new_data)
+{
+	if(strcmp(what,"passphrase") != 0 && strcmp(what, "user") != 0
+		&& strcmp(what, "title") != 0 && strcmp(what, "url") != 0
+		&& strcmp(what, "notes") !=0) {
+		
+		fprintf(stderr, "Only title, user, passphrase, url or notes" \
+		" can be replaced.\n");
+	
+		return;
+	}
+	
+	Entry_t *entry = NULL;
+	Entry_t *head = NULL;
+	
+	entry = db_get_entry_by_id(id);
+	
+	//Skip the initialization data
+	head = entry->next;
+	
+	if(head == NULL) {
+		fprintf(stderr, "No entry found with id %d.\n", id);
+		return;
+	}
+	
+	size_t pwdlen = 255;
+	char pass[pwdlen];
+	char *ptr = pass;
+	char pass2[pwdlen];
+	char *ptr2 = pass2;
+	
+	if(strcmp(what, "passphrase") == 0) {
+		
+		my_getpass(ENTRY_PWD_PROMPT, &ptr, &pwdlen, stdin);
+		my_getpass(ENTRY_PWD_PROMPT_RETRY, &ptr2, &pwdlen, stdin);
+	
+		if(strcmp(pass, pass2) != 0) {
+			fprintf(stderr, "Passphrases do not match.\n");
+			return;
+		}
+	}
+	
+	if(strcmp(what, "title") == 0) {
+		free(head->title);
+		head->title = strdup(new_data);
+	}
+	if(strcmp(what, "user") == 0) {
+		free(head->user);
+		head->user = strdup(new_data);
+	}
+	if(strcmp(what, "passphrase") == 0) {
+		free(head->pwd);
+		head->pwd = strdup(pass);
+	}
+	if(strcmp(what, "url") == 0) {
+		free(head->url);
+		head->url = strdup(new_data);
+	}
+	if(strcmp(what, "notes") == 0) {
+		free(head->notes);
+		head->notes = strdup(new_data);
+	}
+	
+	db_update_entry(id, head);
+	
+	list_free(entry);
+}

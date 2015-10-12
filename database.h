@@ -29,6 +29,7 @@ void db_close(const char *passphrase);
 
 int db_get_next_id();
 bool db_add_entry(Entry_t *entry);
+bool db_update_entry(int id, Entry_t *entry);
 Entry_t *db_get_all_entries();
 Entry_t *db_get_entry_by_id(int id);
 bool db_delete_entry_by_id(int id, bool *success);
