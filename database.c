@@ -257,6 +257,9 @@ void db_close(const char *passphrase)
 	free(path);
 }
 
+//This function is used of to make basic checks before operating with there
+//database. Does the file exists? Is it encrypted? If the database is
+//available for writing or reading returns true, otherwise false.
 static bool db_make_sanity_check(char *path)
 {	
 	if(path == NULL) {
@@ -283,6 +286,8 @@ static bool db_make_sanity_check(char *path)
 	return true;
 }
 
+//Add entry to the database.
+//Returns true on success, false on failure.
 bool db_add_entry(Entry_t *entry)
 {
 	int rc;
@@ -333,6 +338,9 @@ bool db_add_entry(Entry_t *entry)
 	return true;
 }
 
+//Returns a list of all the entries in the database.
+//First entry of the list contains initialization data,
+//which is in this case, the column names of the entries table.
 Entry_t *db_get_all_entries()
 {
 	char *path = NULL;
@@ -380,6 +388,9 @@ Entry_t *db_get_all_entries()
 	return list;
 }
 
+//Get next available auto increment value of there
+//entries table. Functions reads the last used auto increment id
+//and adds 1 to it.
 int db_get_next_id()
 {
 	char *path = NULL;
@@ -426,6 +437,8 @@ int db_get_next_id()
 	return id + 1;
 }
 
+//Get entry which has the want id. The actual data can be read
+//from entry->next. The head only contains initialization data.
 Entry_t *db_get_entry_by_id(int id)
 {
 	char *path = NULL;
@@ -473,6 +486,10 @@ Entry_t *db_get_entry_by_id(int id)
 	return list;
 }
 
+//Delete entry from the database by id. Returns true on success.
+//If true is returned but *success is set to false it means that
+//function was successful, but nothing was deleted (entry with wanted id
+//was not found)
 bool db_delete_entry_by_id(int id, bool *success)
 {
 	char *path = NULL;
@@ -523,8 +540,9 @@ bool db_delete_entry_by_id(int id, bool *success)
 	return true;
 	
 }
-
+//***********************************
 //Database actions callback functions
+//***********************************
 static int cb_get_entries(void *list, int argc, char **argv, char **column_name)
 {	
 	//Insert entries into the list
@@ -552,5 +570,6 @@ static int cb_get_by_id(void *list, int argc, char **argv, char **column_name)
 	
 	return 0;
 }
-
+//********************************
 //End database callback functions
+//********************************

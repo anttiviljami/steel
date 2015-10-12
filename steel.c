@@ -32,9 +32,11 @@ static void usage()
 	
 }
 
+//Program entry point.
 int main(int argc, char *argv[])
 {
 	int option;
+	//Max passphrase lenght. Should be enough, really.
 	size_t pwdlen = 255;
 
 	while(true) {

@@ -26,6 +26,12 @@
 #include <string.h>
 #include "entries.h"
 
+//This implements a simple, single linked list.
+//Not all of the functions are used in command line
+//version of Steel, but they are implemented for
+//later implementation of gui client.
+
+//Create and return new list.
 Entry_t *list_create(const char *title, const char *user,
 			const char *pass, const char *url, const char *notes,
                         int id, Entry_t *next)
@@ -51,6 +57,8 @@ Entry_t *list_create(const char *title, const char *user,
 	return list;
 }
 
+//Add an entry to the list. If the list is NULL, new list is created.
+//Returns the list with an added entry.
 Entry_t *list_add(Entry_t *list, const char *title, const char *user,
 			const char *pass, const char *url, const char *notes,
                         int id)
@@ -69,6 +77,8 @@ Entry_t *list_add(Entry_t *list, const char *title, const char *user,
 	return list;
 }
 
+//Search and return entry with wanted title. Returns NULL if title
+//was not found.
 Entry_t *list_search_by_title(Entry_t *list, const char *title)
 {
 	Entry_t *cursor = list;
@@ -84,6 +94,9 @@ Entry_t *list_search_by_title(Entry_t *list, const char *title)
 	return NULL;
 }
 
+//Returns Entry_t that has matching id.
+//If the list does not contain an entry with wanted
+//id, return NULL
 Entry_t *list_search_by_id(Entry_t *list, int id)
 {
 	Entry_t *cursor = list;
@@ -99,6 +112,9 @@ Entry_t *list_search_by_id(Entry_t *list, int id)
 	return NULL;
 }
 
+//Delete entry from list which has the wanted id.
+//Returns a list without the entry, or NULL if id
+//was not found.
 Entry_t *list_delete_by_id(Entry_t *list, int id)
 {
 	Entry_t *del = NULL;
@@ -114,6 +130,7 @@ Entry_t *list_delete_by_id(Entry_t *list, int id)
 	return list;
 }
 
+//Remove first entry from the list.
 static Entry_t* remove_front(Entry_t* list)
 {
 	if(list == NULL)
@@ -132,6 +149,7 @@ static Entry_t* remove_front(Entry_t* list)
 	return list;
 }
 
+//Remove last entry from the list.
 static Entry_t *remove_back(Entry_t* list)
 {
 	if(list == NULL)
@@ -157,6 +175,8 @@ static Entry_t *remove_back(Entry_t* list)
 	return list;
 }
 
+//Remove Entry nd from list.
+//Returns list without the element that was removed.
 Entry_t *list_remove(Entry_t *list, Entry_t *nd)
 {
 	if(list == nd) {
@@ -250,6 +270,9 @@ static int list_calculate_longest_str(Entry_t *list)
 	return len;
 }
 
+//Print whole list from the cursor pointed by list.
+//Print is formatted with a nice output and should be easy to
+//read.
 void list_print(Entry_t *list)
 {
 	//Take copies of the head pointer.
@@ -266,6 +289,8 @@ void list_print(Entry_t *list)
 		printf("%s\t%s\n", "Passphrase", tmp->pwd);
 		printf("%s\t\t%s\n", "Address", tmp->url);
 		
+		//Print separator line as long as the longest string
+		//in the list.
 		for(int i = 0; i < len; i++)
 			printf("-");
 		
@@ -275,6 +300,7 @@ void list_print(Entry_t *list)
 	}
 }
 
+//Print current cursor.
 void list_print_one(Entry_t *cursor)
 {
 	int len = list_calculate_longest_str_cursor(cursor);
@@ -291,6 +317,8 @@ void list_print_one(Entry_t *cursor)
 	printf("%s\t%s\n", "Passphrase", cursor->pwd);
 	printf("%s\t\t%s\n", "Address", cursor->url);
 	
+	//Print separator line as long as the longest string in the current
+	//list cursor
 	for(int i = 0; i < len; i++)
 		printf("-");
 	

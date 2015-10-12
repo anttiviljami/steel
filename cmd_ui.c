@@ -28,10 +28,14 @@
 #include "database.h"
 #include "cmd_ui.h"
 
+//cmd_ui.c implements simple interface for command line version
+//of Steel. All functions in here are only used from main()
 
+//This is called from main. Adds new entry to the database.
 void add_new_entry(char *title, char *user, char *url)
 {
 	int id;
+	//Should be enough...
 	size_t pwdlen = 255;
 	char pass[pwdlen];
 	char *ptr = pass;
@@ -58,21 +62,29 @@ void add_new_entry(char *title, char *user, char *url)
 	list_free(entry);
 }
 
+//Initialize new database and encrypt it.
+//Return false on failure, true on success.
+//Path must be a path to a file that does not exists.
 bool init_database(const char *path, const char *passphrase)
 {
 	return db_init(path, passphrase);	
 }
 
+//Decrypt database the database pointed by path.
+//If decryption fails, function returns false.
 bool open_database(const char *path, const char *passphrase)
 {
 	return db_open(path, passphrase);
 }
 
+//Encrypt the database.
 void close_database(const char *passphrase)
 {
 	db_close(passphrase);
 }
 
+//Print all available entries to stdin.
+//Database must not be encrypted.
 void show_all_entries()
 {
 	Entry_t *list = db_get_all_entries();
@@ -81,6 +93,8 @@ void show_all_entries()
 	list_free(list);
 }
 
+//Print one entry by id to stdin, if found.
+//Database must not be encrypted.
 void show_one_entry(int id)
 {
 	Entry_t *entry = db_get_entry_by_id(id);
@@ -102,6 +116,8 @@ void show_one_entry(int id)
 	list_free(entry);
 }
 
+//Delete entry by id from the database.
+//Database must not be encrypted.
 void delete_entry(int id)
 {
 	bool success = false;
@@ -115,6 +131,8 @@ void delete_entry(int id)
 	}
 }
 
+//Print all entries to stdin which has data matching with search.
+//Database must not be encrypted.
 void find_entries(const char *search)
 {
 	Entry_t *list = db_get_all_entries();
@@ -137,6 +155,9 @@ void find_entries(const char *search)
 	list_free(list);
 }
 
+//Turns echo of from the terminal and asks for a passphrase.
+//Usually stream is stdin. Returns length of the passphrase,
+//passphrase is stored to lineptr. Lineptr must be allocated beforehand.
 size_t my_getpass(char *prompt, char **lineptr, size_t *n, FILE *stream)
 {
     struct termios old, new;
