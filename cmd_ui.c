@@ -43,6 +43,13 @@ void add_new_entry(char *title, char *user, char *url, char *note)
 	char pass2[pwdlen];
 	char *ptr2 = pass2;
 	
+	id = db_get_next_id();
+	
+	if(id == -1) {
+		fprintf(stderr, "Failed to add a new entry.\n");
+		return;
+	}
+	
 	my_getpass(ENTRY_PWD_PROMPT, &ptr, &pwdlen, stdin);
 	my_getpass(ENTRY_PWD_PROMPT_RETRY, &ptr2, &pwdlen, stdin);
 	
@@ -50,8 +57,6 @@ void add_new_entry(char *title, char *user, char *url, char *note)
 		fprintf(stderr, "Passphrases do not match.\n");
 		return;
 	}
-	
-	id = db_get_next_id();
 		
 	Entry_t *entry = list_create(title, user, pass, url, note, id, NULL);
 
@@ -137,6 +142,12 @@ void show_all_entries()
 void show_one_entry(int id)
 {
 	Entry_t *entry = db_get_entry_by_id(id);
+	
+	if(entry == NULL) {
+		fprintf(stderr, "Cannot show entry with id %d.\n", id);
+		return;
+	}
+	
 	Entry_t *head = entry;
 	Entry_t *next;
 	
@@ -175,6 +186,12 @@ void delete_entry(int id)
 void find_entries(const char *search)
 {
 	Entry_t *list = db_get_all_entries();
+	
+	if(list == NULL) {
+		fprintf(stderr, "Cannot perform the search operation.\n");
+		return;
+	}
+	
 	Entry_t *new_head = list->next;
 	
 	while(new_head != NULL) {
@@ -199,37 +216,37 @@ void find_entries(const char *search)
 //passphrase is stored to lineptr. Lineptr must be allocated beforehand.
 size_t my_getpass(char *prompt, char **lineptr, size_t *n, FILE *stream)
 {
-    struct termios old, new;
-    int nread;
+	struct termios old, new;
+	int nread;
 
-    //Turn terminal echoing off.
-    if(tcgetattr(fileno(stream), &old) != 0)
-        return -1;
-    
-    new = old;
-    new.c_lflag &= ~ECHO;
-    
-    if(tcsetattr(fileno(stream), TCSAFLUSH, &new) != 0)
-        return -1;
+	//Turn terminal echoing off.
+	if(tcgetattr(fileno(stream), &old) != 0)
+		return -1;
+	
+	new = old;
+	new.c_lflag &= ~ECHO;
+	
+	if(tcsetattr(fileno(stream), TCSAFLUSH, &new) != 0)
+		return -1;
 
-    if(prompt)
-        printf("%s", prompt);
+	if(prompt)
+		printf("%s", prompt);
 
-    //Read the password.
-    nread = getline(lineptr, n, stream);
+	//Read the password.
+	nread = getline(lineptr, n, stream);
 
-    if(nread >= 1 && (*lineptr)[nread - 1] == '\n')
-    {
-        (*lineptr)[nread - 1] = 0;
-        nread--;
-    }
-    
-    printf("\n");
+	if(nread >= 1 && (*lineptr)[nread - 1] == '\n')
+	{
+		(*lineptr)[nread - 1] = 0;
+		nread--;
+	}
+	
+	printf("\n");
 
-    //Restore terminal echo.
-    tcsetattr(fileno(stream), TCSAFLUSH, &old);
+	//Restore terminal echo.
+	tcsetattr(fileno(stream), TCSAFLUSH, &old);
 
-    return nread;
+	return nread;
 }
 
 //Replace part of an entry pointed by id. "What" tells the function what to replace
@@ -251,6 +268,12 @@ void replace_part(int id, const char *what, const char *new_data)
 	Entry_t *head = NULL;
 	
 	entry = db_get_entry_by_id(id);
+	
+	if(entry == NULL) {
+		fprintf(stderr, "Cannot replace %s from entry %d.\n",
+			what, id);
+		return;
+	}
 	
 	//Skip the initialization data
 	head = entry->next;

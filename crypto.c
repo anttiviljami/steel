@@ -625,7 +625,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 		
 		fwrite(&block, 1, 1, fOut);
 	}
-	
+
 	mcrypt_generic_deinit(td);
 	mcrypt_module_close(td);
 	
@@ -650,20 +650,20 @@ bool decrypt_file(const char *path, const char *passphrase)
 //Function should generate uniform distribution.
 unsigned int rand_between(unsigned int min, unsigned int max)
 {
-    int r;
-    const unsigned int range = 1 + max - min;
-    const unsigned int buckets = RAND_MAX / range;
-    const unsigned int limit = buckets * range;
+	int r;
+	const unsigned int range = 1 + max - min;
+	const unsigned int buckets = RAND_MAX / range;
+	const unsigned int limit = buckets * range;
 
-    /* Create equal size buckets all in a row, then fire randomly towards
-     * the buckets until you land in one of them. All buckets are equally
-     * likely. If you land off the end of the line of buckets, try again. */
-    do
-    {
-        r = rand();
-    } while (r >= limit);
+	/* Create equal size buckets all in a row, then fire randomly towards
+	* the buckets until you land in one of them. All buckets are equally
+	* likely. If you land off the end of the line of buckets, try again. */
+	do
+	{
+		r = rand();
+	} while (r >= limit);
 
-    return min + (r / buckets);
+	return min + (r / buckets);
 }
 
 //Generate passphrase. Param count is there
@@ -673,20 +673,20 @@ char *generate_pass(int count)
 {
 	if(count < 0 || count > RAND_MAX)
 		return NULL;
-	
+
 	char *pass = NULL;
 	char *alpha = "abcdefghijklmnopqrstuvwxyz" \
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
 	"0123456789";
 	unsigned int max;
 	unsigned int number;
-	
+
 	srand(time(NULL));
 	
 	max = strlen(alpha) - 1;
-	
+
 	pass = calloc(1, (count + 1) * sizeof(char));
-	
+
 	if(pass == NULL)
 		return NULL;
 

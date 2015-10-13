@@ -240,7 +240,7 @@ void db_close(const char *passphrase)
 	path = read_path_from_lockfile();
 	
 	if(path == NULL) {
-		fprintf(stderr, "Failed not read the path\n");
+		fprintf(stderr, "Failed to read the database path\n");
 		return;
 	}
 
@@ -267,7 +267,9 @@ void db_close(const char *passphrase)
 static bool db_make_sanity_check(char *path)
 {	
 	if(path == NULL) {
-		fprintf(stderr, "Database is encrypted or does not exists.\n");
+		fprintf(stderr, "Database is encrypted or does not exists." \
+		" It's also possible that\n~/.steel_open is either corrupted or" \
+		" missing.\n");
 		return false;
 	}
 
