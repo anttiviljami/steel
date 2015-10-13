@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 			{"open",           required_argument, 0, 'o'},
 			{"close",          no_argument,       0, 'c'},
 			{"show",           required_argument, 0, 's'},
-			{"gen-pass",       no_argument,       0, 'g'}, //todo
+			{"gen-pass",       required_argument, 0, 'g'},
 			{"add",            required_argument, 0, 'a'},
 			{"delete",         required_argument, 0, 'd'},
 			{"replace",        required_argument, 0, 'r'},
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:o:cs:ga:d:r:f:lV", long_options,
+		option = getopt_long(argc, argv, "i:o:cs:g:a:d:r:f:lV", long_options,
 				&option_index);
 
 		if(option == -1)
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 			show_one_entry(atoi(optarg));
 			break;
 		case 'g':
-			generate_password();
+			generate_password(atoi(optarg));
 			break;
 		case 'a': {
 			//Has user?

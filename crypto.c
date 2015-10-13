@@ -18,11 +18,15 @@
  *
  */
 
+//Needed for random() in stdlib, it's posix function
+#define _XOPEN_SOURCE 500
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <mcrypt.h>
 #include <stdint.h>
 #include <mhash.h>
+#include <time.h>
 
 #include "crypto.h"
 #include "bcrypt/bcrypt.h"
@@ -642,9 +646,54 @@ bool decrypt_file(const char *path, const char *passphrase)
 	return true;
 }
 
-char *generate_pass()
+//Generates random number between 0 and max.
+//Function should generate uniform distribution.
+unsigned int rand_between(unsigned int min, unsigned int max)
 {
-	
+    int r;
+    const unsigned int range = 1 + max - min;
+    const unsigned int buckets = RAND_MAX / range;
+    const unsigned int limit = buckets * range;
 
-	return NULL;
+    /* Create equal size buckets all in a row, then fire randomly towards
+     * the buckets until you land in one of them. All buckets are equally
+     * likely. If you land off the end of the line of buckets, try again. */
+    do
+    {
+        r = rand();
+    } while (r >= limit);
+
+    return min + (r / buckets);
+}
+
+//Generate passphrase. Param count is there
+//length of the passphrase. Actually, at the moment
+//this function does not generate passphrases, but just passwords.
+char *generate_pass(int count)
+{
+	if(count < 0 || count > RAND_MAX)
+		return NULL;
+	
+	char *pass = NULL;
+	char *alpha = "abcdefghijklmnopqrstuvwxyz" \
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+	"0123456789";
+	long max;
+	long number;
+	
+	srand(time(NULL));
+	
+	max = strlen(alpha);
+	
+	pass = calloc(1, (count + 1) * sizeof(char));
+	
+	if(pass == NULL)
+		return NULL;
+
+	for(int i = 0; i < count; i++) {
+		number = rand_between(0, max);
+		pass[i] = alpha[number];
+	}
+
+	return pass;
 }

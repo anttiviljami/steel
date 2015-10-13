@@ -270,9 +270,14 @@ void replace_part(int id, const char *what, const char *new_data)
 //Function generates new password and prints it to stdout.
 //Does not use the database, so this function can be called
 //even if the database is encrypted.
-void generate_password()
+void generate_password(int count)
 {
-	char *pass = generate_pass();
+	if(count < 6) {
+		fprintf(stderr, "Minimum length is 6 characters.\n");
+		return;
+	}
+	
+	char *pass = generate_pass(count);
 	
 	if(pass == NULL) {
 		fprintf(stderr, "Generating new password failed.\n");
