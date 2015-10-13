@@ -125,9 +125,11 @@ void close_database()
 void show_all_entries()
 {
 	Entry_t *list = db_get_all_entries();
-	list_print(list);
 	
-	list_free(list);
+	if(list != NULL) {
+		list_print(list);
+		list_free(list);
+	}
 }
 
 //Print one entry by id to stdin, if found.
