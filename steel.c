@@ -37,8 +37,6 @@ static void usage()
 int main(int argc, char *argv[])
 {
 	int option;
-	//Max passphrase lenght. Should be enough, really.
-	size_t pwdlen = 255;
 
 	while(true) {
 
@@ -68,40 +66,15 @@ int main(int argc, char *argv[])
 			break;
 
 		switch(option) {
-		case 'i': {
-			
-			char passphrase[pwdlen];
-			char *ptr = passphrase;
-
-			my_getpass(MASTER_PWD_PROMPT, &ptr, &pwdlen, stdin);
-			
-			if(!init_database(optarg, passphrase))
-				return 0;
-		
+		case 'i':
+			init_database(optarg);
 			break;
-		}
-		case 'o': {
-			
-			char passphrase[pwdlen];
-			char *ptr = passphrase;
-
-			my_getpass(MASTER_PWD_PROMPT, &ptr, &pwdlen, stdin);
-			
-			if(!open_database(optarg, passphrase))
-				return 0;
-		
+		case 'o':
+			open_database(optarg);
 			break;
-		}
-		case 'c': {
-
-			char passphrase[pwdlen];
-			char *ptr = passphrase;
-
-			my_getpass(MASTER_PWD_PROMPT, &ptr, &pwdlen, stdin);
-			close_database(passphrase);
-		
+		case 'c':
+			close_database();
 			break;
-		}
 		case 's':
 			show_one_entry(atoi(optarg));
 			break;
@@ -168,7 +141,6 @@ int main(int argc, char *argv[])
 			printf("Steel v%.1f Copyright (c) Niko Rosvall\n", VERSION);
 			break;
 		}
-
 
 	}
 	

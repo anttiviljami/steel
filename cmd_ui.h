@@ -22,13 +22,14 @@
 #define __CMD_UI_H
 
 #define MASTER_PWD_PROMPT "Master passphrase: "
+#define MASTER_PWD_PROMPT_RETRY "Retype master passphrase: "
 #define ENTRY_PWD_PROMPT "Enter new passphrase: "
 #define ENTRY_PWD_PROMPT_RETRY "Retype new passphrase: "
 
 void add_new_entry(char *title, char *user, char *url, char *note);
-bool init_database(const char *path, const char *passphrase);
-bool open_database(const char *path, const char *passphrase);
-void close_database(const char *passphrase);
+bool init_database(const char *path);
+bool open_database(const char *path);
+void close_database();
 void show_all_entries();
 void show_one_entry(int id);
 void delete_entry(int id);

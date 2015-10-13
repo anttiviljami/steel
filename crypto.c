@@ -678,12 +678,12 @@ char *generate_pass(int count)
 	char *alpha = "abcdefghijklmnopqrstuvwxyz" \
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
 	"0123456789";
-	long max;
-	long number;
+	unsigned int max;
+	unsigned int number;
 	
 	srand(time(NULL));
 	
-	max = strlen(alpha);
+	max = strlen(alpha) - 1;
 	
 	pass = calloc(1, (count + 1) * sizeof(char));
 	
