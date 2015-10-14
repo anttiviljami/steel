@@ -162,7 +162,7 @@ static Key_t generate_key(const char *passphrase, bool *success)
 	
 	free(keybytes);
 	free(saltbytes);
-	
+
 	*success = true;
 	
 	return key;
@@ -648,7 +648,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 
 //Generates random number between 0 and max.
 //Function should generate uniform distribution.
-unsigned int rand_between(unsigned int min, unsigned int max)
+static unsigned int rand_between(unsigned int min, unsigned int max)
 {
 	int r;
 	const unsigned int range = 1 + max - min;

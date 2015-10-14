@@ -158,6 +158,37 @@ static char *read_path_from_lockfile()
 	return data;
 }
 
+//This function is used of to make basic checks before operating with there
+//database. Does the file exists? Is it encrypted? If the database is
+//available for writing or reading returns true, otherwise false.
+static bool db_make_sanity_check(char *path)
+{	
+	if(path == NULL) {
+		fprintf(stderr, "Database is encrypted or does not exists." \
+		" It's also possible that\n~/.steel_open is either corrupted or" \
+		" missing.\n");
+		return false;
+	}
+
+	if(!file_exists(path)) {
+		fprintf(stderr, "%s: does not exists\n", path);
+		free(path);
+		return false;
+	}
+
+	if(is_file_encrypted(path)) {
+		//This should not happen, ever
+		//If we can get get the path from the lockfile and it's encrypted
+		//there's something wrong. Lock file should not even exists when
+		//database is encrypted.
+		fprintf(stderr, "%s: is encrypted.\n", path);
+		free(path);
+		return false;
+	}
+	
+	return true;
+}
+
 //Initializes new Steel database to the path given.
 //After creation, the database is encrypted with the passphrase.
 //Returns true on success, false on failure. Function does not override
@@ -188,6 +219,17 @@ bool db_init(const char *path, const char *passphrase)
 		"url TEXT," \
 		"notes TEXT," \
 		"id INTEGER PRIMARY KEY AUTOINCREMENT);";
+
+	retval = sqlite3_exec(db, sql, NULL, 0, &error);
+
+	if(retval != SQLITE_OK) {
+		fprintf(stderr, "SQL error: %s\n", error);
+		sqlite3_free(error);
+		sqlite3_close(db);
+		return false;
+	}
+	
+	sql = "create table auth(key TEXT);";
 
 	retval = sqlite3_exec(db, sql, NULL, 0, &error);
 
@@ -259,37 +301,6 @@ void db_close(const char *passphrase)
 	remove_lockfile();
 
 	free(path);
-}
-
-//This function is used of to make basic checks before operating with there
-//database. Does the file exists? Is it encrypted? If the database is
-//available for writing or reading returns true, otherwise false.
-static bool db_make_sanity_check(char *path)
-{	
-	if(path == NULL) {
-		fprintf(stderr, "Database is encrypted or does not exists." \
-		" It's also possible that\n~/.steel_open is either corrupted or" \
-		" missing.\n");
-		return false;
-	}
-
-	if(!file_exists(path)) {
-		fprintf(stderr, "%s: does not exists\n", path);
-		free(path);
-		return false;
-	}
-
-	if(is_file_encrypted(path)) {
-		//This should not happen, ever
-		//If we can get get the path from the lockfile and it's encrypted
-		//there's something wrong. Lock file should not even exists when
-		//database is encrypted.
-		fprintf(stderr, "%s: is encrypted.\n", path);
-		free(path);
-		return false;
-	}
-	
-	return true;
 }
 
 //Add entry to the database.

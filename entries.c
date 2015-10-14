@@ -277,7 +277,7 @@ static int list_calculate_longest_str(Entry_t *list)
 //read.
 void list_print(Entry_t *list)
 {
-	//Take copies of the head pointer.
+	//Take copy of the head pointer.
 	Entry_t *tmp = list->next;
 	int len = list_calculate_longest_str(tmp) + 18;
 	
