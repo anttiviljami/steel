@@ -23,9 +23,11 @@
 
 #include "entries.h"
 
-bool db_init(const char *path, const char *passphrase);
+bool db_init(const char *path);
 bool db_open(const char *path, const char *passphrase);
-void db_close();
+void db_close(const char *passphrase);
+bool db_file_exists(const char *path);
+char *read_path_from_lockfile();
 
 int db_get_next_id();
 bool db_add_entry(Entry_t *entry);

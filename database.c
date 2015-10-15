@@ -29,7 +29,6 @@
 
 #include "database.h"
 #include "crypto.h"
-#include "session.h"
 
 //File implements basic interface for using database operations
 //needed by Steel. It's designed in a way that it should be easy
@@ -42,7 +41,7 @@ static int cb_get_by_id(void *list, int argc, char **argv, char **column_name);
 
 //Returns true is file exists and false if not.
 //Function should be portable.
-static bool file_exists(const char *path)
+bool db_file_exists(const char *path)
 {
 	bool retval = false;
 	struct stat buffer;
@@ -94,7 +93,7 @@ static void remove_lockfile()
 	if(path == NULL)
 		return;
 	
-	if(file_exists(path)) {
+	if(db_file_exists(path)) {
 		remove(path);
 	}
 
@@ -129,7 +128,7 @@ static void create_lockfile(const char *content)
 //Reads the currently opened database path from the
 //lock file. Returns NULL on failure, the path on success.
 //Caller must free the return value.
-static char *read_path_from_lockfile()
+char *read_path_from_lockfile()
 {
 	char *lockfile = NULL;
 	FILE *fp = NULL;
@@ -170,7 +169,7 @@ static bool db_make_sanity_check(char *path)
 		return false;
 	}
 
-	if(!file_exists(path)) {
+	if(!db_file_exists(path)) {
 		fprintf(stderr, "%s: does not exists\n", path);
 		free(path);
 		return false;
@@ -193,15 +192,15 @@ static bool db_make_sanity_check(char *path)
 //After creation, the database is encrypted with the passphrase.
 //Returns true on success, false on failure. Function does not override
 //existing database in the path.
-bool db_init(const char *path, const char *passphrase)
+bool db_init(const char *path)
 {
 	sqlite3 *db;
 	char *error = NULL;
 	int retval;
 	char *sql;
 
-	if(file_exists(path)) {
-		fprintf(stderr, "File already exists\n");
+	if(db_file_exists(path)) {
+		fprintf(stderr, "File already exists.\n");
 		return false;
 	}
 
@@ -229,23 +228,9 @@ bool db_init(const char *path, const char *passphrase)
 		return false;
 	}
 	
-	sql = "create table auth(key TEXT);";
-
-	retval = sqlite3_exec(db, sql, NULL, 0, &error);
-
-	if(retval != SQLITE_OK) {
-		fprintf(stderr, "SQL error: %s\n", error);
-		sqlite3_free(error);
-		sqlite3_close(db);
-		return false;
-	}
-
 	sqlite3_close(db);
 
-	if(!encrypt_file(path, passphrase)) {
-		fprintf(stderr, "Encryption failed\n");
-		return false;
-	}
+	create_lockfile(path);
 	
 	return true;
 }
@@ -255,7 +240,7 @@ bool db_init(const char *path, const char *passphrase)
 //Path is also written to the lock file.
 bool db_open(const char *path, const char *passphrase)
 {
-	if(!file_exists(path)) {
+	if(!db_file_exists(path)) {
 		fprintf(stderr, "%s: does not exists\n", path);
 		return false;
 	}
@@ -273,15 +258,11 @@ bool db_open(const char *path, const char *passphrase)
 }
 
 //Encrypt database file with passphrase and
-//remove lock file. Key data is read from the database
-//auth table using session_read_key_data and after that
-//all data from auth table is removed, before the encryption.
-void db_close()
-{
-	//get db path from lock file
+//remove lock file.
+void db_close(const char *passphrase)
+{	
 	char *path = NULL;
-	char *key_data = NULL;
-
+	
 	path = read_path_from_lockfile();
 	
 	if(path == NULL) {
@@ -289,30 +270,12 @@ void db_close()
 		return;
 	}
 
-	if(!file_exists(path)) {
+	if(!db_file_exists(path)) {
 		fprintf(stderr, "%s: does not exists\n", path);
 		free(path);
 		return;
 	}
 	
-	key_data = session_read_key_data(path);
-	
-	if(key_data == NULL) {
-		fprintf(stderr, "Reading session data failed.\n");
-		free(path);
-		return;
-	}
-	
-	//Delete the stored key data from the auth table.
-	if(!session_remove_data(path)) {
-		fprintf(stderr, "Removing key data failed.\n");
-		free(path);
-		return;
-	}
-	
-	//TODO: we need a new method that can be called using key_data
-	//directly.encrypt_file should be renamed to something like encrypt_steel_db
-	//probably add parameter use_ready_key_data
 	if(!encrypt_file(path, passphrase)) {
 		fprintf(stderr, "Encryption failed\n");
 		free(path);

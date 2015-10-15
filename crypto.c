@@ -205,6 +205,26 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 	return key;
 }
 
+//Generates random number between 0 and max.
+//Function should generate uniform distribution.
+static unsigned int rand_between(unsigned int min, unsigned int max)
+{
+	int r;
+	const unsigned int range = 1 + max - min;
+	const unsigned int buckets = RAND_MAX / range;
+	const unsigned int limit = buckets * range;
+
+	/* Create equal size buckets all in a row, then fire randomly towards
+	* the buckets until you land in one of them. All buckets are equally
+	* likely. If you land off the end of the line of buckets, try again. */
+	do
+	{
+		r = rand();
+	} while (r >= limit);
+
+	return min + (r / buckets);
+}
+
 //Compare two hmac hashes and return true if they match, false if not.
 bool verify_hmac(const unsigned char *old, const unsigned char *new)
 {
@@ -344,8 +364,7 @@ bool verify_passphrase(const char *passphrase, const char *hash)
 
 //Encrypt file pointed by path using passphrase.
 //On successful encryption, return true, otherwise false.
-bool encrypt_file(const char *path, const char *passphrase, 
-		  Session_t session, bool use_session)
+bool encrypt_file(const char *path, const char *passphrase)
 {
 	MCRYPT td;
 	Key_t key;
@@ -357,8 +376,12 @@ bool encrypt_file(const char *path, const char *passphrase,
 	char *output_filename = NULL;
 	bool success;
 	
-	if(!use_session)
-		key = generate_key(passphrase, &success);
+	if(is_file_encrypted(path)) {
+		fprintf(stderr, "File is already encrypted.\n");
+		return false;
+	}
+	
+	key = generate_key(passphrase, &success);
 	
 	if(!success) {
 		fprintf(stderr, "Failed to get new key\n");
@@ -645,34 +668,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 
 	free(output_filename);
 	
-	//TODO: create session_t
-	if(!session_store_key_data(path, session)) {
-		fprintf(stderr, "Storing key data failed\n");
-		return false;
-	}
-
-	//TODO: rename decrypt_file to decrypt_steel_db, encrypt_steel_db
 	return true;
-}
-
-//Generates random number between 0 and max.
-//Function should generate uniform distribution.
-static unsigned int rand_between(unsigned int min, unsigned int max)
-{
-	int r;
-	const unsigned int range = 1 + max - min;
-	const unsigned int buckets = RAND_MAX / range;
-	const unsigned int limit = buckets * range;
-
-	/* Create equal size buckets all in a row, then fire randomly towards
-	* the buckets until you land in one of them. All buckets are equally
-	* likely. If you land off the end of the line of buckets, try again. */
-	do
-	{
-		r = rand();
-	} while (r >= limit);
-
-	return min + (r / buckets);
 }
 
 //Generate passphrase. Param count is there

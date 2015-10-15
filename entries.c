@@ -281,7 +281,8 @@ void list_print(Entry_t *list)
 	Entry_t *tmp = list->next;
 	int len = list_calculate_longest_str(tmp) + 18;
 	
-	printf("\n");
+	if(tmp != NULL)
+		printf("\n");
 	
 	while(tmp != NULL) {
 	

@@ -32,6 +32,88 @@
 //cmd_ui.c implements simple interface for command line version
 //of Steel. All functions in here are only used from main()
 
+static bool open_db_exist(const char *message)
+{
+	char *old = NULL;
+	old = read_path_from_lockfile();
+	
+	if(old != NULL) {
+		
+		if(db_file_exists(old)) {
+			fprintf(stderr, "An open database exists. To improve security only one\n" \
+			"passphrase database can be open at once.\n");
+			fprintf(stderr, "Close %s first before %s another"\
+			" database.\n", old, message);
+			free(old);
+			return true;
+		}
+		
+		free(old);
+	}
+	
+	return false;
+}
+
+//Initialize new database and encrypt it.
+//Return false on failure, true on success.
+//Path must be a path to a file that does not exists.
+bool init_database(const char *path)
+{
+	if(open_db_exist("creating"))
+		return false;
+	
+	if(!db_init(path)) {
+		fprintf(stderr, "Database initialization unsuccessful\n");
+		return false;
+	}
+	
+	return true;
+}
+
+//Decrypt database the database pointed by path.
+//If decryption fails, function returns false.
+bool open_database(const char *path)
+{
+	//Max passphrase length. Should be enough, really.
+	size_t pwdlen = 255;
+	char passphrase[pwdlen];
+	char *ptr = passphrase;
+	
+	if(open_db_exist("opening"))
+		return false;
+
+	my_getpass(MASTER_PWD_PROMPT, &ptr, &pwdlen, stdin);
+	
+	if(!db_open(path, passphrase)) {
+		fprintf(stderr, "Database opening unsuccessful.\n");
+		return false;
+	}
+		
+	return true;
+}
+
+//Encrypt the database. We don't need the path of the database,
+//as it's read from the steel_open file. Only one database can be
+//open at once.
+void close_database()
+{
+	size_t pwdlen = 255;
+	char passphrase[pwdlen];
+	char *ptr = passphrase;
+	char pass2[pwdlen];
+	char *ptr2 = pass2;
+	
+	my_getpass(MASTER_PWD_PROMPT, &ptr, &pwdlen, stdin);
+	my_getpass(MASTER_PWD_PROMPT_RETRY, &ptr2, &pwdlen, stdin);
+	
+	if(strcmp(passphrase, pass2) != 0) {
+		fprintf(stderr, "Passphrases do not match.\n");
+		return false;
+	}
+	
+	db_close(passphrase);
+}
+
 //This is called from main. Adds new entry to the database.
 void add_new_entry(char *title, char *user, char *url, char *note)
 {
@@ -66,58 +148,6 @@ void add_new_entry(char *title, char *user, char *url, char *note)
 	}
 	
 	list_free(entry);
-}
-
-//Initialize new database and encrypt it.
-//Return false on failure, true on success.
-//Path must be a path to a file that does not exists.
-bool init_database(const char *path)
-{
-	size_t pwdlen = 255;
-	char passphrase[pwdlen];
-	char *ptr = passphrase;
-	char pass2[pwdlen];
-	char *ptr2 = pass2;
-	
-	my_getpass(MASTER_PWD_PROMPT, &ptr, &pwdlen, stdin);
-	my_getpass(MASTER_PWD_PROMPT_RETRY, &ptr2, &pwdlen, stdin);
-	
-	if(strcmp(passphrase, pass2) != 0) {
-		fprintf(stderr, "Passphrases do not match.\n");
-		return false;
-	}
-	
-	if(!db_init(path, passphrase)) {
-		fprintf(stderr, "Database initialization unsuccessful\n");
-		return false;
-	}
-	
-	return true;
-}
-
-//Decrypt database the database pointed by path.
-//If decryption fails, function returns false.
-bool open_database(const char *path)
-{
-	//Max passphrase length. Should be enough, really.
-	size_t pwdlen = 255;
-	char passphrase[pwdlen];
-	char *ptr = passphrase;
-
-	my_getpass(MASTER_PWD_PROMPT, &ptr, &pwdlen, stdin);
-	
-	if(!db_open(path, passphrase)) {
-		fprintf(stderr, "Database opening unsuccessful.\n");
-		return false;
-	}
-		
-	return true;
-}
-
-//Encrypt the database.
-void close_database()
-{
-	db_close();
 }
 
 //Print all available entries to stdin.
