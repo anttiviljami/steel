@@ -25,7 +25,7 @@
 
 bool db_init(const char *path, const char *passphrase);
 bool db_open(const char *path, const char *passphrase);
-void db_close(const char *passphrase);
+void db_close();
 
 int db_get_next_id();
 bool db_add_entry(Entry_t *entry);

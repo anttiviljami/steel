@@ -39,7 +39,8 @@ typedef struct Key
 unsigned char *get_data_hmac(const char *data, long datalen, Key_t key);
 bool hmac_file_content(const char *path, Key_t key);
 bool verify_hmac(const unsigned char *old, const unsigned char *new);
-bool encrypt_file(const char *path, const char *passphrase);
+bool encrypt_file(const char *path, const char *passphrase, Session_t session, 
+		  bool use_session);
 bool decrypt_file(const char *path, const char *passphrase);
 bool verify_passphrase(const char *passphrase, const char *hash);
 bool is_file_encrypted(const char *path);

@@ -27,9 +27,9 @@
 #include <sqlite3.h>
 #include <sys/stat.h>
 
-
 #include "database.h"
 #include "crypto.h"
+#include "session.h"
 
 //File implements basic interface for using database operations
 //needed by Steel. It's designed in a way that it should be easy
@@ -268,16 +268,19 @@ bool db_open(const char *path, const char *passphrase)
 	//Write path as content to our lock file
 	//to determine what db file is open.
 	create_lockfile(path);
-	
+
 	return true;
 }
 
 //Encrypt database file with passphrase and
-//remove lock file.
-void db_close(const char *passphrase)
+//remove lock file. Key data is read from the database
+//auth table using session_read_key_data and after that
+//all data from auth table is removed, before the encryption.
+void db_close()
 {
 	//get db path from lock file
 	char *path = NULL;
+	char *key_data = NULL;
 
 	path = read_path_from_lockfile();
 	
@@ -292,6 +295,24 @@ void db_close(const char *passphrase)
 		return;
 	}
 	
+	key_data = session_read_key_data(path);
+	
+	if(key_data == NULL) {
+		fprintf(stderr, "Reading session data failed.\n");
+		free(path);
+		return;
+	}
+	
+	//Delete the stored key data from the auth table.
+	if(!session_remove_data(path)) {
+		fprintf(stderr, "Removing key data failed.\n");
+		free(path);
+		return;
+	}
+	
+	//TODO: we need a new method that can be called using key_data
+	//directly.encrypt_file should be renamed to something like encrypt_steel_db
+	//probably add parameter use_ready_key_data
 	if(!encrypt_file(path, passphrase)) {
 		fprintf(stderr, "Encryption failed\n");
 		free(path);

@@ -344,7 +344,8 @@ bool verify_passphrase(const char *passphrase, const char *hash)
 
 //Encrypt file pointed by path using passphrase.
 //On successful encryption, return true, otherwise false.
-bool encrypt_file(const char *path, const char *passphrase)
+bool encrypt_file(const char *path, const char *passphrase, 
+		  Session_t session, bool use_session)
 {
 	MCRYPT td;
 	Key_t key;
@@ -355,8 +356,9 @@ bool encrypt_file(const char *path, const char *passphrase)
 	FILE *fOut = NULL;
 	char *output_filename = NULL;
 	bool success;
-
-	key = generate_key(passphrase, &success);
+	
+	if(!use_session)
+		key = generate_key(passphrase, &success);
 	
 	if(!success) {
 		fprintf(stderr, "Failed to get new key\n");
@@ -643,6 +645,13 @@ bool decrypt_file(const char *path, const char *passphrase)
 
 	free(output_filename);
 	
+	//TODO: create session_t
+	if(!session_store_key_data(path, session)) {
+		fprintf(stderr, "Storing key data failed\n");
+		return false;
+	}
+
+	//TODO: rename decrypt_file to decrypt_steel_db, encrypt_steel_db
 	return true;
 }
 

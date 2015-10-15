@@ -117,12 +117,7 @@ bool open_database(const char *path)
 //Encrypt the database.
 void close_database()
 {
-	size_t pwdlen = 255;
-	char passphrase[pwdlen];
-	char *ptr = passphrase;
-
-	my_getpass(MASTER_PWD_PROMPT, &ptr, &pwdlen, stdin);
-	db_close(passphrase);
+	db_close();
 }
 
 //Print all available entries to stdin.
