@@ -21,7 +21,10 @@
 #ifndef __STATUS_H
 #define __STATUS_H
 
+int status_count_file_lines(FILE *fp);
+char *status_read_file_line(FILE *fp);
+FILE *status_get_file_ptr(char *mode);
 void status_set_tracking(const char *path);
-void status_del_tracking(const char *path);
+int status_del_tracking(const char *path);
 
 #endif

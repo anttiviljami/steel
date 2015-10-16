@@ -377,3 +377,53 @@ void generate_password(int count)
 	
 	free(pass);
 }
+
+void show_database_statuses()
+{
+	int count;
+	FILE *fp = NULL;
+	char *line = NULL;
+
+	fp = status_get_file_ptr("r");
+
+	if(fp == NULL)
+		return;
+
+	count = status_count_file_lines(fp);
+
+	if(count == -2) {
+		fprintf(stdout, "No databases found.\n");
+		fclose(fp);
+		return;
+	}
+
+	rewind(fp);
+	
+	while(count >= 0) {
+
+		line = status_read_file_line(fp);
+
+		if(line == NULL) {
+			fprintf(stderr, "Error reading line.\n");
+			fclose(fp);
+			return;
+		}
+		
+		if(!db_file_exists(line)) {
+			fprintf(stderr, "Database file %s does not exist.\n", line);
+			fclose(fp);
+			return;
+		}
+
+		if(is_file_encrypted(line))
+			fprintf(stdout, "%s\t%s\t%s\n", "[Encrypted]", db_last_modified(line), line);
+		else
+			fprintf(stdout, "%s\t%s\t%s\n", "[Decrypted]", db_last_modified(line), line);
+
+		free(line);
+		
+		count--;
+	}
+
+	fclose(fp);
+}

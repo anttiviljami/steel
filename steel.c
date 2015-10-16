@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
 			{"replace",        required_argument, 0, 'r'},
 			{"find",           required_argument, 0, 'f'},
 			{"list-all",       no_argument,       0, 'l'},
+			{"show-status",       no_argument,       0, 'S'},
 			{"version",        no_argument,       0, 'V'},
 			{0, 0, 0, 0}
 
@@ -59,7 +60,7 @@ int main(int argc, char *argv[])
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:o:cs:g:a:d:r:f:lV", long_options,
+		option = getopt_long(argc, argv, "i:o:cs:g:a:d:r:f:lSV", long_options,
 				&option_index);
 
 		if(option == -1)
@@ -136,6 +137,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'l':
 			show_all_entries();
+			break;
+		case 'S':
+			show_database_statuses();
 			break;
 		case 'V':
 			printf("Steel v%.1f Copyright (c) Niko Rosvall\n", VERSION);

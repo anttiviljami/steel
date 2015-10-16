@@ -26,6 +26,7 @@
 #include <string.h>
 #include <sqlite3.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include "database.h"
 #include "crypto.h"
@@ -266,7 +267,7 @@ void db_close(const char *passphrase)
 	path = read_path_from_lockfile();
 	
 	if(path == NULL) {
-		fprintf(stderr, "Failed to read the database path\n");
+		fprintf(stderr, "Failed to read the database path.\n");
 		return;
 	}
 
@@ -589,6 +590,20 @@ bool db_update_entry(int id, Entry_t *entry)
 	free(path);
 	
 	return true;
+}
+
+//Functions returns last modification time of a file pointed
+//by path. Function assumes that the file exists.
+char *db_last_modified(const char *path)
+{
+	static char date[20];
+	struct stat st;
+
+	stat(path, &st);
+
+	strftime(date, 20, "%Y-%m-%d %H:%M:%S", localtime(&(st.st_ctime)));
+
+	return date;
 }
 
 //***********************************
