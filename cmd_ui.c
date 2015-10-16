@@ -28,6 +28,7 @@
 #include "database.h"
 #include "crypto.h"
 #include "cmd_ui.h"
+#include "status.h"
 
 //cmd_ui.c implements simple interface for command line version
 //of Steel. All functions in here are only used from main()
@@ -66,6 +67,8 @@ bool init_database(const char *path)
 		fprintf(stderr, "Database initialization unsuccessful\n");
 		return false;
 	}
+	
+	status_set_tracking(path);
 	
 	return true;
 }
