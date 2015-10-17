@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 		static struct option long_options[] =
 		{
 			{"init-new",               required_argument, 0, 'i'},
+			{"backup",                 required_argument, 0, 'b'},
 			{"open",                   required_argument, 0, 'o'},
 			{"close",                  no_argument,       0, 'c'},
 			{"show",                   required_argument, 0, 's'},
@@ -61,7 +62,7 @@ int main(int argc, char *argv[])
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:o:cs:g:a:d:r:f:lR:SV", long_options,
+		option = getopt_long(argc, argv, "i:b:o:cs:g:a:d:r:f:lR:SV", long_options,
 				&option_index);
 
 		if(option == -1)
@@ -70,6 +71,8 @@ int main(int argc, char *argv[])
 		switch(option) {
 		case 'i':
 			init_database(optarg);
+			break;
+		case 'b':
 			break;
 		case 'o':
 			open_database(optarg);
