@@ -146,7 +146,7 @@ void close_database()
 	
 	if(strcmp(passphrase, pass2) != 0) {
 		fprintf(stderr, "Passphrases do not match.\n");
-		return false;
+		return;
 	}
 	
 	db_close(passphrase);

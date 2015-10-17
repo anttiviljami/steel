@@ -229,7 +229,6 @@ bool db_init(const char *path)
 		return false;
 	}
 	
-	sqlite3_free(error);
 	sqlite3_close(db);
 	create_lockfile(path);
 	
@@ -284,7 +283,6 @@ void db_close(const char *passphrase)
 	}
 
 	db_remove_lockfile();
-
 	free(path);
 }
 
@@ -326,14 +324,12 @@ bool db_add_entry(Entry_t *entry)
 	if(rc != SQLITE_OK) {
 		fprintf(stderr, "Error: %s\n", error);
 		sqlite3_free(error);
-		free(sql);
+		sqlite3_free(sql);
 		free(path);
 		return false;
 	}
 
-	free(sql);
-	sqlite3_free(error);
-
+	sqlite3_free(sql);
 	sqlite3_close(db);
 	free(path);
 	
@@ -384,7 +380,6 @@ Entry_t *db_get_all_entries()
 		return NULL;
 	}
 
-	sqlite3_free(error);
 	sqlite3_close(db);
 	free(path);
 
@@ -418,7 +413,7 @@ int db_get_next_id()
 	if(rc) {
 		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 		free(path);
-		return NULL;
+		return -1;
 	}
 	
 	//This will get us the last available auto increment id
@@ -430,10 +425,9 @@ int db_get_next_id()
 		fprintf(stderr, "Error: %s\n", error);
 		sqlite3_free(error);
 		free(path);
-		return NULL;
+		return -1;
 	}
 
-	sqlite3_free(error);
 	sqlite3_close(db);
 	free(path);
 
@@ -480,12 +474,12 @@ Entry_t *db_get_entry_by_id(int id)
 	if(rc != SQLITE_OK) {
 		fprintf(stderr, "Error: %s\n", error);
 		sqlite3_free(error);
+		sqlite3_free(sql);
 		free(path);
 		return NULL;
 	}
 
-	free(sql);
-	sqlite3_free(error);
+	sqlite3_free(sql);
 	sqlite3_close(db);
 	free(path);
 	
@@ -531,6 +525,7 @@ bool db_delete_entry_by_id(int id, bool *success)
 	if(rc != SQLITE_OK) {
 		fprintf(stderr, "Error: %s\n", error);
 		sqlite3_free(error);
+		sqlite3_free(sql);
 		free(path);
 		return false;
 	}
@@ -540,8 +535,7 @@ bool db_delete_entry_by_id(int id, bool *success)
 	if(count > 0)
 		*success = true;
 	
-	free(sql);
-	sqlite3_free(error);
+	sqlite3_free(sql);
 	sqlite3_close(db);
 	free(path);
 	
@@ -588,12 +582,12 @@ bool db_update_entry(int id, Entry_t *entry)
 	if(rc != SQLITE_OK) {
 		fprintf(stderr, "Error: %s\n", error);
 		sqlite3_free(error);
+		sqlite3_free(sql);
 		free(path);
 		return false;
 	}
 	
-	free(sql);
-	sqlite3_free(error);
+	sqlite3_free(sql);
 	sqlite3_close(db);
 	free(path);
 	
