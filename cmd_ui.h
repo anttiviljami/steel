@@ -39,5 +39,6 @@ void replace_part(int id, const char *what, const char *new_data);
 void generate_password(int count);
 void show_database_statuses();
 void remove_database(const char *path);
+void backup_database(const char *source, const char *dest);
 
 #endif

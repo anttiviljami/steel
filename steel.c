@@ -73,6 +73,11 @@ int main(int argc, char *argv[])
 			init_database(optarg);
 			break;
 		case 'b':
+			if(!argv[optind]) {
+				fprintf(stderr, "Missing option <destination>.\n");
+				return 0;
+			}
+			backup_database(optarg, argv[optind]);
 			break;
 		case 'o':
 			open_database(optarg);

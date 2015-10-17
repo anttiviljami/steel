@@ -29,9 +29,10 @@
 #include "crypto.h"
 #include "cmd_ui.h"
 #include "status.h"
+#include "backup.h"
 
 //cmd_ui.c implements simple interface for command line version
-//of Steel. All functions in here are only used from main()
+//of Steel. All functions in here are only called from main()
 
 //Simple helper function to check if there's an open database
 //available.
@@ -57,6 +58,8 @@ static bool open_db_exist(const char *message)
 	return false;
 }
 
+//Simple helper function to check if the steel_dbs file used for
+//tracking databases exists.
 static bool steel_tracker_file_exists()
 {
 	char *dbs = NULL;
@@ -508,5 +511,12 @@ void remove_database(const char *path)
 	}
 	else {
 		fprintf(stderr, "Unable to shred the database.\n");
+	}
+}
+
+void backup_database(const char *source, const char *dest)
+{
+	if(!backup_export(source, dest)) {
+		fprintf(stderr, "Unable to backup the database.\n");
 	}
 }
