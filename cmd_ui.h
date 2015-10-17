@@ -41,5 +41,9 @@ void show_database_statuses();
 void remove_database(const char *path);
 void backup_database(const char *source, const char *dest);
 void backup_import_database(const char *source, const char *dest);
+void show_passphrase_only(int id);
+void show_username_only(int id);
+void show_url_only(int id);
+void show_notes_only(int id);
 
 #endif

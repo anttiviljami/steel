@@ -547,3 +547,95 @@ void backup_import_database(const char *source, const char *dest)
 		return;
 	}
 }
+
+void show_passphrase_only(int id)
+{
+	if(!steel_tracker_file_exists())
+		return;
+	
+	Entry_t *entry = db_get_entry_by_id(id);
+	
+	if(entry == NULL) {
+		fprintf(stderr, "Cannot process entry with id %d.\n", id);
+		return;
+	}
+	
+	//Skip the first one, it's initialization data.
+	Entry_t *next = entry->next;
+	
+	if(next != NULL)
+		fprintf(stdout, "%s\n", next->pwd);
+	else
+		printf("No entry found with id %d.\n", id);
+
+	list_free(entry);	
+}
+
+void show_username_only(int id)
+{
+	if(!steel_tracker_file_exists())
+		return;
+	
+	Entry_t *entry = db_get_entry_by_id(id);
+	
+	if(entry == NULL) {
+		fprintf(stderr, "Cannot process entry with id %d.\n", id);
+		return;
+	}
+	
+	//Skip the first one, it's initialization data.
+	Entry_t *next = entry->next;
+	
+	if(next != NULL)
+		fprintf(stdout, "%s\n", next->user);
+	else
+		printf("No entry found with id %d.\n", id);
+
+	list_free(entry);
+}
+
+void show_url_only(int id)
+{
+	if(!steel_tracker_file_exists())
+		return;
+	
+	Entry_t *entry = db_get_entry_by_id(id);
+	
+	if(entry == NULL) {
+		fprintf(stderr, "Cannot process entry with id %d.\n", id);
+		return;
+	}
+	
+	//Skip the first one, it's initialization data.
+	Entry_t *next = entry->next;
+	
+	if(next != NULL)
+		fprintf(stdout, "%s\n", next->url);
+	else
+		printf("No entry found with id %d.\n", id);
+	
+	list_free(entry);
+}
+
+void show_notes_only(int id)
+{
+	if(!steel_tracker_file_exists())
+		return;
+	
+	Entry_t *entry = db_get_entry_by_id(id);
+	
+	if(entry == NULL) {
+		fprintf(stderr, "Cannot process entry with id %d.\n", id);
+		return;
+	}
+	
+	//Skip the first one, it's initialization data.
+	Entry_t *next = entry->next;
+	
+	if(next != NULL)
+		fprintf(stdout, "%s\n", next->notes);
+	else
+		printf("No entry found with id %d.\n", id);
+	
+	list_free(entry);
+}

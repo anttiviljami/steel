@@ -57,14 +57,19 @@ int main(int argc, char *argv[])
 			{"list-all",               no_argument,       0, 'l'},
 			{"show-status",            no_argument,       0, 'S'},
 			{"version",                no_argument,       0, 'V'},
+			
+			{"show-passphrase",        required_argument, 0, 'p'},
+			{"show-username",          required_argument, 0, 'u'},
+			{"show-url",               required_argument, 0, 'U'},
+			{"show-notes",             required_argument, 0, 'n'},
 			{0, 0, 0, 0}
 
 		};
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:b:B:o:cs:g:a:d:r:f:lR:SV", long_options,
-				&option_index);
+		option = getopt_long(argc, argv, "i:b:B:o:cs:g:a:d:r:f:lR:SVp:u:U:n:", 
+				     long_options, &option_index);
 
 		if(option == -1)
 			break;
@@ -151,6 +156,18 @@ int main(int argc, char *argv[])
 		}
 		case 'f':
 			find_entries(optarg);
+			break;
+		case 'p':
+			show_passphrase_only(atoi(optarg));
+			break;
+		case 'u':
+			show_username_only(atoi(optarg));
+			break;
+		case 'U':
+			show_url_only(atoi(optarg));
+			break;
+		case 'n':
+			show_notes_only(atoi(optarg));
 			break;
 		case 'l':
 			show_all_entries();
