@@ -229,8 +229,8 @@ bool db_init(const char *path)
 		return false;
 	}
 	
+	sqlite3_free(error);
 	sqlite3_close(db);
-
 	create_lockfile(path);
 	
 	return true;
@@ -384,6 +384,7 @@ Entry_t *db_get_all_entries()
 		return NULL;
 	}
 
+	sqlite3_free(error);
 	sqlite3_close(db);
 	free(path);
 
@@ -432,6 +433,7 @@ int db_get_next_id()
 		return NULL;
 	}
 
+	sqlite3_free(error);
 	sqlite3_close(db);
 	free(path);
 
@@ -482,6 +484,8 @@ Entry_t *db_get_entry_by_id(int id)
 		return NULL;
 	}
 
+	free(sql);
+	sqlite3_free(error);
 	sqlite3_close(db);
 	free(path);
 	
@@ -536,6 +540,8 @@ bool db_delete_entry_by_id(int id, bool *success)
 	if(count > 0)
 		*success = true;
 	
+	free(sql);
+	sqlite3_free(error);
 	sqlite3_close(db);
 	free(path);
 	
@@ -586,6 +592,8 @@ bool db_update_entry(int id, Entry_t *entry)
 		return false;
 	}
 	
+	free(sql);
+	sqlite3_free(error);
 	sqlite3_close(db);
 	free(path);
 	

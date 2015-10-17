@@ -22,6 +22,6 @@
 #define __BACKUP_H
 
 bool backup_export(const char *source, const char *dest);
-bool backup_import(const char *path);
+bool backup_import(const char *path, const char *dest);
 
 #endif

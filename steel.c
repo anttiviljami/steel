@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
 		{
 			{"init-new",               required_argument, 0, 'i'},
 			{"backup",                 required_argument, 0, 'b'},
+			{"import-backup",          required_argument, 0, 'B'},
 			{"open",                   required_argument, 0, 'o'},
 			{"close",                  no_argument,       0, 'c'},
 			{"show",                   required_argument, 0, 's'},
@@ -62,7 +63,7 @@ int main(int argc, char *argv[])
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:b:o:cs:g:a:d:r:f:lR:SV", long_options,
+		option = getopt_long(argc, argv, "i:b:B:o:cs:g:a:d:r:f:lR:SV", long_options,
 				&option_index);
 
 		if(option == -1)
@@ -78,6 +79,13 @@ int main(int argc, char *argv[])
 				return 0;
 			}
 			backup_database(optarg, argv[optind]);
+			break;
+		case 'B':
+			if(!argv[optind]) {
+				fprintf(stderr, "Missing option <destination>.\n");
+				return 0;
+			}
+			backup_import_database(optarg, argv[optind]);
 			break;
 		case 'o':
 			open_database(optarg);

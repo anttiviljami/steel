@@ -470,8 +470,11 @@ void show_database_statuses()
 		if(!db_file_exists(line)) {
 			fprintf(stderr, "Database file %s does not exist.\n", 
 				line);
-			fclose(fp);
-			return;
+			fprintf(stderr, "Will disable tracking for it.\n");
+			//Move to the entry of the steel_dbs
+			status_del_tracking(line);
+			count--;
+			continue;
 		}
 
 		if(is_file_encrypted(line))
@@ -516,7 +519,21 @@ void remove_database(const char *path)
 
 void backup_database(const char *source, const char *dest)
 {
+	if(!steel_tracker_file_exists())
+		return;
+	
 	if(!backup_export(source, dest)) {
 		fprintf(stderr, "Unable to backup the database.\n");
+	}
+}
+
+//Function does not check the existence of existing databases,
+//As we of course want to allow the first database to be imported one.
+//Function also sets tracking status for the imported database.
+void backup_import_database(const char *source, const char *dest)
+{
+	if(!backup_import(source, dest)) {
+		fprintf(stderr, "Unable to import the backup.\n");
+		return;
 	}
 }

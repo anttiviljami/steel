@@ -89,8 +89,30 @@ bool backup_export(const char *source, const char *dest)
 
 //Import backup database pointed by path. Function also adds
 //the database into the steel_dbs file Steel to track it's status.
-bool backup_import(const char *path)
+bool backup_import(const char *source, const char *dest)
 {
+	if(!db_file_exists(source)) {
+		fprintf(stderr, "%s does not exist.\n", source);
+		return false;
+	}
 	
+	if(db_file_exists(dest)) {
+		fprintf(stderr, "%s already exists.\n", dest);
+		return false;
+	}
+	
+	if(!is_file_encrypted(source)) {
+		fprintf(stdout, "Backup file not encrypted.\nAre you sure you're" \
+		" importing Steel backup file?\n");
+		return false;
+	}
+	
+	if(!copy_file(source, dest)) {
+		fprintf(stderr, "Backing up %s failed.\n", source);
+		return false;
+	}
+	
+	status_set_tracking(dest);
+		
 	return true;
 }
