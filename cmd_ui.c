@@ -502,18 +502,28 @@ void remove_database(const char *path)
 		return;
 	
 	bool encrypted = false;
-
+	char ch;
+	
 	encrypted = is_file_encrypted(path);
 	
-	if(db_shred(path)) {
-		status_del_tracking(path);
+	fprintf(stdout, "Are you sure? (y/N) ");
+	
+	ch = getc(stdin);
+	
+	if(ch == 'y' || ch == 'Y') {
+	
+		if(db_shred(path)) {
+			status_del_tracking(path);
 
-		if(!encrypted) {
-			db_remove_lockfile();
+			if(!encrypted)
+				db_remove_lockfile();
+		}
+		else {
+			fprintf(stderr, "Unable to shred the database.\n");
 		}
 	}
 	else {
-		fprintf(stderr, "Unable to shred the database.\n");
+		fprintf(stdout, "Aborted.\n");
 	}
 }
 
