@@ -58,7 +58,7 @@ static char *get_status_file_tmp_path()
 
 //Get the path of steel_dbs file or NULL on failure.
 //Caller must free the return value.
-static char *get_status_file_path()
+char *status_get_file_path()
 {
 	char *path = NULL;
 	char *env = NULL;
@@ -141,7 +141,7 @@ FILE *status_get_file_ptr(char *mode)
 	char *path = NULL;
 	FILE *fp = NULL;
 
-	path = get_status_file_path();
+	path = status_get_file_path();
 
 	if(path == NULL)
 		return NULL;
@@ -236,7 +236,7 @@ int status_del_tracking(const char *path)
 	fclose(fp);
 	fclose(tmp);
 
-	char *p = get_status_file_path();
+	char *p = status_get_file_path();
 
 	//Simply rename our .steel_dbs temp file to the original one, after it's removed.
 	remove(p);

@@ -33,6 +33,8 @@
 //cmd_ui.c implements simple interface for command line version
 //of Steel. All functions in here are only used from main()
 
+//Simple helper function to check if there's an open database
+//available.
 static bool open_db_exist(const char *message)
 {
 	char *old = NULL;
@@ -53,6 +55,30 @@ static bool open_db_exist(const char *message)
 	}
 	
 	return false;
+}
+
+static bool steel_tracker_file_exists()
+{
+	char *dbs = NULL;
+
+	dbs = status_get_file_path();
+
+	if(dbs == NULL) {
+		fprintf(stderr, "Error getting status file path.\n");
+		return false;
+	}
+	
+	//We can use db_file_exists function to check any file existence.
+	//In the end, it's just simple check, not related to databases.
+	if(!db_file_exists(dbs)) {
+		fprintf(stdout, "No databases found.\n");
+		free(dbs);
+		return false;
+	}
+	
+	free(dbs);
+	
+	return true;	
 }
 
 //Initialize new database and encrypt it.
@@ -77,6 +103,9 @@ bool init_database(const char *path)
 //If decryption fails, function returns false.
 bool open_database(const char *path)
 {
+	if(!steel_tracker_file_exists())
+		return false;
+	
 	//Max passphrase length. Should be enough, really.
 	size_t pwdlen = 255;
 	char passphrase[pwdlen];
@@ -100,6 +129,9 @@ bool open_database(const char *path)
 //open at once.
 void close_database()
 {
+	if(!steel_tracker_file_exists())
+		return;
+	
 	size_t pwdlen = 255;
 	char passphrase[pwdlen];
 	char *ptr = passphrase;
@@ -120,6 +152,9 @@ void close_database()
 //This is called from main. Adds new entry to the database.
 void add_new_entry(char *title, char *user, char *url, char *note)
 {
+	if(!steel_tracker_file_exists())
+		return;
+	
 	int id;
 	//Should be enough...
 	size_t pwdlen = 255;
@@ -157,6 +192,9 @@ void add_new_entry(char *title, char *user, char *url, char *note)
 //Database must not be encrypted.
 void show_all_entries()
 {
+	if(!steel_tracker_file_exists())
+		return;
+	
 	Entry_t *list = db_get_all_entries();
 	
 	if(list != NULL) {
@@ -169,6 +207,9 @@ void show_all_entries()
 //Database must not be encrypted.
 void show_one_entry(int id)
 {
+	if(!steel_tracker_file_exists())
+		return;
+	
 	Entry_t *entry = db_get_entry_by_id(id);
 	
 	if(entry == NULL) {
@@ -198,6 +239,9 @@ void show_one_entry(int id)
 //Database must not be encrypted.
 void delete_entry(int id)
 {
+	if(!steel_tracker_file_exists())
+		return;
+	
 	bool success = false;
 	
 	if(!db_delete_entry_by_id(id, &success)) {
@@ -213,6 +257,9 @@ void delete_entry(int id)
 //Database must not be encrypted.
 void find_entries(const char *search)
 {
+	if(!steel_tracker_file_exists())
+		return;
+	
 	Entry_t *list = db_get_all_entries();
 	
 	if(list == NULL) {
@@ -282,6 +329,9 @@ size_t my_getpass(char *prompt, char **lineptr, size_t *n, FILE *stream)
 //Database must not be encrypted.
 void replace_part(int id, const char *what, const char *new_data)
 {
+	if(!steel_tracker_file_exists())
+		return;
+	
 	if(strcmp(what,"passphrase") != 0 && strcmp(what, "user") != 0
 		&& strcmp(what, "title") != 0 && strcmp(what, "url") != 0
 		&& strcmp(what, "notes") !=0) {
@@ -385,6 +435,9 @@ void show_database_statuses()
 	int count;
 	FILE *fp = NULL;
 	char *line = NULL;
+	
+	if(!steel_tracker_file_exists())
+		return;
 
 	fp = status_get_file_ptr("r");
 
@@ -412,15 +465,18 @@ void show_database_statuses()
 		}
 		
 		if(!db_file_exists(line)) {
-			fprintf(stderr, "Database file %s does not exist.\n", line);
+			fprintf(stderr, "Database file %s does not exist.\n", 
+				line);
 			fclose(fp);
 			return;
 		}
 
 		if(is_file_encrypted(line))
-			fprintf(stdout, "%s\t%s\t%s\n", "[Encrypted]", db_last_modified(line), line);
+			fprintf(stdout, "%s\t%s\t%s\n", "[Encrypted]", 
+				db_last_modified(line), line);
 		else
-			fprintf(stdout, "%s\t%s\t%s\n", "[Decrypted]", db_last_modified(line), line);
+			fprintf(stdout, "%s\t%s\t%s\n", "[Decrypted]", 
+				db_last_modified(line), line);
 
 		free(line);
 		
@@ -430,12 +486,27 @@ void show_database_statuses()
 	fclose(fp);
 }
 
+//Shreds the database file pointed by path.
+//If the database is decrypted (currently the open one)
+//function will also remove .steel_open file.
+//Method will also remove entry from steel_dbs tracker file.
 void remove_database(const char *path)
 {
-	if(shred_database(path))
-		status_del_tracking(path);
-	else
-		fprintf(stderr, "Unable to remove the database.\n");
+	if(!steel_tracker_file_exists())
+		return;
+	
+	bool encrypted = false;
 
-	//TODO: if database is open, remove .steel_open file too
+	encrypted = is_file_encrypted(path);
+	
+	if(db_shred(path)) {
+		status_del_tracking(path);
+
+		if(!encrypted) {
+			db_remove_lockfile();
+		}
+	}
+	else {
+		fprintf(stderr, "Unable to shred the database.\n");
+	}
 }

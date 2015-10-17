@@ -28,7 +28,7 @@ bool db_open(const char *path, const char *passphrase);
 void db_close(const char *passphrase);
 bool db_file_exists(const char *path);
 char *read_path_from_lockfile();
-
+void db_remove_lockfile();
 int db_get_next_id();
 bool db_add_entry(Entry_t *entry);
 bool db_update_entry(int id, Entry_t *entry);
@@ -37,6 +37,6 @@ Entry_t *db_get_entry_by_id(int id);
 bool db_delete_entry_by_id(int id, bool *success);
 
 char *db_last_modified(const char *path);
-bool shred_database(const char *path);
+bool db_shred(const char *path);
 
 #endif

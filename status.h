@@ -26,5 +26,6 @@ char *status_read_file_line(FILE *fp);
 FILE *status_get_file_ptr(char *mode);
 void status_set_tracking(const char *path);
 int status_del_tracking(const char *path);
+char *status_get_file_path();
 
 #endif

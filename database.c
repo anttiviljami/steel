@@ -57,7 +57,7 @@ bool db_file_exists(const char *path)
 //Lock file is a simple file which has the currently opened
 //database path. Returns NULL on failure. Caller must free the return
 //value.
-static char *get_lockfile_path()
+char *get_lockfile_path()
 {
 	char *path = NULL;
 	char *env = NULL;
@@ -86,8 +86,8 @@ static char *get_lockfile_path()
 	return path;
 }
 
-//Remove the lock file. Called on db close.
-static void remove_lockfile()
+//Remove the lock file if found.
+void db_remove_lockfile()
 {
 	char *path = get_lockfile_path();
 
@@ -282,8 +282,8 @@ void db_close(const char *passphrase)
 		free(path);
 		return;
 	}
-	
-	remove_lockfile();
+
+	db_remove_lockfile();
 
 	free(path);
 }
@@ -606,10 +606,12 @@ char *db_last_modified(const char *path)
 	return date;
 }
 
-//At the moment, this is just a simple file delete.
-//in the future we should implement real secure delete.
+//Implement real secure delete. At the moment we just use shred command
+//for deletion as it's basically available every (at least on GNU/Linux).
+//Note that what shred does is much more secure than simply just deleting
+//the file normally. See man shred for more information.
 //Returns true on success, false on failure.
-bool shred_database(const char *path)
+bool db_shred(const char *path)
 {
 	char *command = "shred -f -z -u ";
 	char *run = NULL;
@@ -628,7 +630,7 @@ bool shred_database(const char *path)
 	ret = system(run);
 
 	if(ret != 0) {
-		fprintf(stderr, "Command shred, not found. Aborting.\n");
+		fprintf(stderr, "Unable to run command shred. Aborting.\n");
 		free(run);
 		return false;
 	}
