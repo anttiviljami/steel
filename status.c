@@ -30,6 +30,60 @@
 //file and removed from there. If file path is in the file, Steel "knows"
 //it, if not, Steel does not know anything about it. Really, it's that simple.
 
+static char *get_status_file_tmp_path()
+{
+	char *path = NULL;
+	char *env = NULL;
+	
+	env = getenv("HOME");
+
+	if(env == NULL) {
+		fprintf(stderr, "Failed to get env.\n");
+		return NULL;
+	}
+
+	//+17 for /.steel_dbs.tmp
+	path = calloc(1, (strlen(env) + 17) * sizeof(char));
+
+	if(path == NULL) {
+		fprintf(stderr, "Malloc failed.\n");
+		return NULL;
+	}
+
+	strcpy(path, env);
+	strcat(path, "/.steel_dbs.tmp");
+
+	return path;
+}
+
+//Get the path of steel_dbs file or NULL on failure.
+//Caller must free the return value.
+static char *get_status_file_path()
+{
+	char *path = NULL;
+	char *env = NULL;
+	
+	env = getenv("HOME");
+
+	if(env == NULL) {
+		fprintf(stderr, "Failed to get env.\n");
+		return NULL;
+	}
+
+	//+12 for /.steel_dbs
+	path = calloc(1, (strlen(env) + 12) * sizeof(char));
+
+	if(path == NULL) {
+		fprintf(stderr, "Malloc failed.\n");
+		return NULL;
+	}
+
+	strcpy(path, env);
+	strcat(path, "/.steel_dbs");
+
+	return path;
+}
+
 //Get count file lines by new line characters.
 //Returns -1 on error, -2 when file has no lines.
 //Caller must close the file pointer after it's no longer
@@ -85,26 +139,12 @@ char *status_read_file_line(FILE *fp)
 FILE *status_get_file_ptr(char *mode)
 {
 	char *path = NULL;
-	char *env = NULL;
 	FILE *fp = NULL;
-	
-	env = getenv("HOME");
 
-	if(env == NULL) {
-		fprintf(stderr, "Failed to get env.\n");
+	path = get_status_file_path();
+
+	if(path == NULL)
 		return NULL;
-	}
-
-	//+12 for /.steel_dbs
-	path = calloc(1, (strlen(env) + 12) * sizeof(char));
-
-	if(path == NULL) {
-		fprintf(stderr, "Malloc failed.\n");
-		return NULL;
-	}
-
-	strcpy(path, env);
-	strcat(path, "/.steel_dbs");
 
 	fp = fopen(path, mode);
 
@@ -140,11 +180,12 @@ void status_set_tracking(const char *path)
 int status_del_tracking(const char *path)
 {
 	FILE *fp = NULL;
+	FILE *tmp = NULL;
 	int count;
-	int size;
 	char *line = NULL;
-	int current = 0;
 	int linefound = 0;
+	int current = 0;
+	char *tmppath = NULL;
 	
 	fp = status_get_file_ptr("r");
 
@@ -160,10 +201,16 @@ int status_del_tracking(const char *path)
 
 	//Move the file pointer back to the beginning of the file.
 	rewind(fp);
-	
-	size = count;
-	char *lines[size];
 
+	tmppath = get_status_file_tmp_path();
+
+	if(tmppath == NULL) {
+		fclose(fp);
+		return -1;
+	}
+	
+	tmp = fopen(tmppath, "w+");
+	
 	//Read each line to lines.
 	while(count >= 0) {
 
@@ -172,31 +219,31 @@ int status_del_tracking(const char *path)
 		if(line == NULL) {
 			fprintf(stderr, "Error reading line.\n");
 			fclose(fp);
+			free(tmppath);
 			return -1;
 		}
 
 		//Skip line that matches the one we want to remove.
-		if(strcmp(line, path) != 0) {
-			lines[current] = line;
+		if(strcmp(line, path) != 0)
+			fprintf(tmp, "%s\n", line);
+		else
 			linefound = current;
-		}
 
-		free(line);
-		
 		current++;
 		count--;
 	}
 
 	fclose(fp);
+	fclose(tmp);
 
-	//Open the file again with write access and write all lines
-	//except the one which was deleted.
-	fp = status_get_file_ptr("w");
+	char *p = get_status_file_path();
 
-	for(int i = 0; i < current; i++)
-		fprintf(fp, "%s\n", lines[i]);
+	//Simply rename our .steel_dbs temp file to the original one, after it's removed.
+	remove(p);
+	rename(tmppath, p);
 
-	fclose(fp);
+	free(p);
+	free(tmppath);
 
 	return linefound;
 }

@@ -65,13 +65,13 @@ static char *generate_random_data(int size)
 	char *data = NULL;
 	FILE *frnd = NULL;
 
-	data = calloc(1, size); //* sizeof(char));
+	data = calloc(1, size);
 
 	if(data == NULL) {
-		fprintf(stderr, "Malloc failed\n");		
+		fprintf(stderr, "Malloc failed\n");
 		return NULL;
 	}
-	
+
 	frnd = fopen("/dev/urandom", "r");
 
 	if(!frnd) {
@@ -82,7 +82,7 @@ static char *generate_random_data(int size)
 
 	fread(data, size, 1, frnd);
 	fclose(frnd);
-	
+
 	return data;
 }
 

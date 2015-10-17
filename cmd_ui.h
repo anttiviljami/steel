@@ -38,5 +38,6 @@ size_t my_getpass(char *prompt, char **lineptr, size_t *n, FILE *stream);
 void replace_part(int id, const char *what, const char *new_data);
 void generate_password(int count);
 void show_database_statuses();
+void remove_database(const char *path);
 
 #endif

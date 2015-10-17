@@ -37,5 +37,6 @@ Entry_t *db_get_entry_by_id(int id);
 bool db_delete_entry_by_id(int id, bool *success);
 
 char *db_last_modified(const char *path);
+bool shred_database(const char *path);
 
 #endif

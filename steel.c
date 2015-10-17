@@ -42,25 +42,26 @@ int main(int argc, char *argv[])
 
 		static struct option long_options[] =
 		{
-			{"init-new",       required_argument, 0, 'i'},
-			{"open",           required_argument, 0, 'o'},
-			{"close",          no_argument,       0, 'c'},
-			{"show",           required_argument, 0, 's'},
-			{"gen-pass",       required_argument, 0, 'g'},
-			{"add",            required_argument, 0, 'a'},
-			{"delete",         required_argument, 0, 'd'},
-			{"replace",        required_argument, 0, 'r'},
-			{"find",           required_argument, 0, 'f'},
-			{"list-all",       no_argument,       0, 'l'},
-			{"show-status",       no_argument,       0, 'S'},
-			{"version",        no_argument,       0, 'V'},
+			{"init-new",               required_argument, 0, 'i'},
+			{"open",                   required_argument, 0, 'o'},
+			{"close",                  no_argument,       0, 'c'},
+			{"show",                   required_argument, 0, 's'},
+			{"gen-pass",               required_argument, 0, 'g'},
+			{"add",                    required_argument, 0, 'a'},
+			{"delete",                 required_argument, 0, 'd'},
+			{"replace",                required_argument, 0, 'r'},
+			{"shred-database",         required_argument, 0, 'R'},
+			{"find",                   required_argument, 0, 'f'},
+			{"list-all",               no_argument,       0, 'l'},
+			{"show-status",            no_argument,       0, 'S'},
+			{"version",                no_argument,       0, 'V'},
 			{0, 0, 0, 0}
 
 		};
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:o:cs:g:a:d:r:f:lSV", long_options,
+		option = getopt_long(argc, argv, "i:o:cs:g:a:d:r:f:lR:SV", long_options,
 				&option_index);
 
 		if(option == -1)
@@ -137,6 +138,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'l':
 			show_all_entries();
+			break;
+		case 'R':
+			remove_database(optarg);
 			break;
 		case 'S':
 			show_database_statuses();

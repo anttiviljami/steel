@@ -378,6 +378,8 @@ void generate_password(int count)
 	free(pass);
 }
 
+//Show all tracked databases, including their encryption status and last
+//modified date.
 void show_database_statuses()
 {
 	int count;
@@ -404,7 +406,7 @@ void show_database_statuses()
 		line = status_read_file_line(fp);
 
 		if(line == NULL) {
-			fprintf(stderr, "Error reading line.\n");
+			fprintf(stderr, "Error reading line. Corrupted .steel_dbs file?\n");
 			fclose(fp);
 			return;
 		}
@@ -426,4 +428,14 @@ void show_database_statuses()
 	}
 
 	fclose(fp);
+}
+
+void remove_database(const char *path)
+{
+	if(shred_database(path))
+		status_del_tracking(path);
+	else
+		fprintf(stderr, "Unable to remove the database.\n");
+
+	//TODO: if database is open, remove .steel_open file too
 }

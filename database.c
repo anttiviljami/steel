@@ -93,7 +93,7 @@ static void remove_lockfile()
 
 	if(path == NULL)
 		return;
-	
+
 	if(db_file_exists(path)) {
 		remove(path);
 	}
@@ -112,7 +112,7 @@ static void create_lockfile(const char *content)
 
 	if(path == NULL)
 		return;
-	
+
 	fp = fopen(path,"w");
 
 	if(fp == NULL) {
@@ -604,6 +604,38 @@ char *db_last_modified(const char *path)
 	strftime(date, 20, "%Y-%m-%d %H:%M:%S", localtime(&(st.st_ctime)));
 
 	return date;
+}
+
+//At the moment, this is just a simple file delete.
+//in the future we should implement real secure delete.
+//Returns true on success, false on failure.
+bool shred_database(const char *path)
+{
+	char *command = "shred -f -z -u ";
+	char *run = NULL;
+	int ret = -1;
+
+	run = calloc(1, (strlen(path) + strlen(command)) + 1);
+
+	if(run == NULL) {
+		fprintf(stderr, "Malloc failed.\n");
+		return false;
+	}
+
+	strcpy(run, command);
+	strcat(run, path);
+	
+	ret = system(run);
+
+	if(ret != 0) {
+		fprintf(stderr, "Command shred, not found. Aborting.\n");
+		free(run);
+		return false;
+	}
+
+	free(run);
+	
+	return true;
 }
 
 //***********************************
