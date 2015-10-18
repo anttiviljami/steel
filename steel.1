@@ -1,0 +1,99 @@
+.\" Manpage for steel.
+.\" Any errors or typos, contact niko@byteptr.com.
+
+.TH man 1 "18 Oct 2015" "0.9" "steel man page"
+.SH NAME
+steel \- command line password manager
+.SH SYNOPSIS
+steel [OPTIONS]
+.SH DESCRIPTION
+Steel is a command line password manager for Unix like 
+operating systems.
+.SH OPTIONS
+.IP "-i, --init-new <path>"
+Create a new database
+.IP "-o, --open <path>"
+Open an existing database
+.IP "-c, --close"
+Close open database
+.IP "-a, --add <title> <user> <url> <notes>"
+Add new entry to database
+.IP "-g, --gen-pass"
+Generate secure password
+.IP "-d, --delete <id>"
+Delete an entry by id
+.IP "-r, --replace <id> <what> [content]"
+Replace an entry data. <what> can be either
+"user", "title", "url", "notes" or "passphrase".
+.IP "-R, --shred-db <path>"
+Shred database
+.IP "-f, --find <search>"
+Search database
+.IP "-l, --list-all"
+Show all entries
+.IP "-S, --show-status"
+Show database statuses
+.IP "-b, --backup <source> <destination>"
+Backup database
+.IP "-B, --import-backup <source> <destionation>"
+Import database backup
+.IP "-V, --version"
+Show program version
+.IP "-p, --show-passphrase <id>"
+Show an entry passphrase
+.IP "-u, --show-username <id>"
+Show an entry username
+.IP "-U, --show-url <id>"
+Show an entry url
+.IP "-n, --show-notes <id>"
+Show an entry notes
+.IP "-h, --help"
+Show short help and exit.
+.SH EXAMPLES
+Create a new database:
+       steel --init-new "/path/to/file.db"
+.PP        
+Open and decrypt database:
+       steel --open "/path/to/existing/file.db"
+.PP
+Close and encrypt database:
+       steel --close
+Steel knows what database is currently open and encrypts it.
+Close will ask you to type a master passphrase which is used for encryption.
+.PP
+Add an entry to an open database:
+       steel --add "My new entry" "My username" "Url" "Some important notes"
+All fields are optional except the title field.
+If you don't to insert for example an url, just empty quotes "".
+.PP
+Replace url in an entry:
+       steel --replace 4 "url" "http://www.newurl.com"
+.PP
+Display on passphrase of an existing entry:
+       steel --show-passphrase 4
+.PP
+Remove database permanently:
+       steel --shred-db "/path/to/existing/file.db"
+It's not possible to recover shredded database, use with caution.
+.PP
+Copy passphrase to X-Window system clipboard:
+       steel --show-passphrase 4 | xclip -selection clipboard
+You will need to install xclip, if it's not already installed on your system.
+.PP
+If you want to export all entries to a file:
+       steel --list-all > file.txt
+.SH NOTES
+Steel does not have a concept of "change master passphrase". When you close
+an open database using --close you can type a master passphrase. This passphrase
+is then  required to open the database. You can change the master passphrase
+everytime when you close the database, if you want to.
+.SH FILES
+.I $HOME/.steel_open
+.I $HOME/.steel_dbs
+.SH AUTHORS
+Written by Niko Rosvall.
+.SH COPYRIGHT
+Copyright (C) 2015 Niko Rosvall <niko@byteptr.com>
+.PP
+Released under license GPL-3+. For more information, see
+http://www.gnu.org/licenses.

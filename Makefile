@@ -43,7 +43,7 @@ install: all
 	fi
 	cp memo.1 $(PREFIX)/share/man/man1/
 	gzip -f $(PREFIX)/share/man/man1/steel.1
-	cp memo $(PREFIX)/bin/
+	cp steel $(PREFIX)/bin/
 
 uninstall:
 	rm $(PREFIX)/bin/steel
