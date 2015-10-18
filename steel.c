@@ -29,8 +29,46 @@
 
 static void usage()
 {
-	
-	
+#define HELP "\
+SYNOPSIS\n\
+\n\
+steel [options]\n\
+\n\
+OPTIONS\n\
+\n\
+-i, --init-new          <path>                        Create a new database\n\
+-o, --open              <path>                        Open an existing database\n\
+-c, --close                                           Close open database\n\
+-a, --add               <title> <user> <url> <notes>  Add new entry to database\n\
+-s, --show              <id>                          Show entry by id\n\
+-g, --gen-pass                                        Generate secure password\n\
+-d, --delete                                          Delete an entry by id\n\
+-r, --replace           <id> <what> [content]         Replace an entry data\n\
+						      <what> can be either \"user\",\n\
+						      \"title\", \"url\", \"notes\" or\n\
+					              \"passphrase\".\n\
+-R, --shred-db          <path>                        Shred database\n\
+-f, --find              <search>                      Search database\n\
+-l, --list-all                                        Show all entries\n\
+-S, --show-status                                     Show database statuses\n\
+-b, --backup            <source> <destination>        Backup database\n\
+-B, --import-backup     <source> <destionation>       Import database backup\n\
+-V, --version                                         Show program version\n\
+-p, --show-passphrase   <id>                          Show an entry passphrase\n\
+-u, --show-username     <id>                          Show an entry username\n\
+-U, --show-url          <id>                          Show an entry url\n\
+-n, --show-notes        <id>                          Show an entry notes\n\
+-h, --help                                            Show short help and exit.\n\
+\n\
+For more information and examples see man steel(1).\n\
+\n\
+AUTHORS\n\
+Copyright (C) 2015 Niko Rosvall <niko@byteptr.com>\n\
+\n\
+Released under license GPL-3+. For more information, see\n\
+http://www.gnu.org/licenses\n\
+"
+	printf(HELP);
 }
 
 //Program entry point.
@@ -52,12 +90,12 @@ int main(int argc, char *argv[])
 			{"add",                    required_argument, 0, 'a'},
 			{"delete",                 required_argument, 0, 'd'},
 			{"replace",                required_argument, 0, 'r'},
-			{"shred-database",         required_argument, 0, 'R'},
+			{"shred-db",               required_argument, 0, 'R'},
 			{"find",                   required_argument, 0, 'f'},
 			{"list-all",               no_argument,       0, 'l'},
 			{"show-status",            no_argument,       0, 'S'},
 			{"version",                no_argument,       0, 'V'},
-			
+			{"help",                   no_argument,       0, 'h'},
 			{"show-passphrase",        required_argument, 0, 'p'},
 			{"show-username",          required_argument, 0, 'u'},
 			{"show-url",               required_argument, 0, 'U'},
@@ -68,7 +106,7 @@ int main(int argc, char *argv[])
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:b:B:o:cs:g:a:d:r:f:lR:SVp:u:U:n:", 
+		option = getopt_long(argc, argv, "i:b:B:o:cs:g:a:d:r:f:lR:SVp:u:U:n:h", 
 				     long_options, &option_index);
 
 		if(option == -1)
@@ -180,6 +218,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'V':
 			printf("Steel v%.1f Copyright (c) Niko Rosvall\n", VERSION);
+			break;
+		case 'h':
+			usage();
 			break;
 		}
 
