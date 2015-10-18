@@ -52,7 +52,7 @@ OPTIONS\n\
 -l, --list-all                                        Show all entries\n\
 -S, --show-status                                     Show database statuses\n\
 -b, --backup            <source> <destination>        Backup database\n\
--B, --import-backup     <source> <destionation>       Import database backup\n\
+-B, --import-backup     <source> <destination>        Import database backup\n\
 -V, --version                                         Show program version\n\
 -p, --show-passphrase   <id>                          Show an entry passphrase\n\
 -u, --show-username     <id>                          Show an entry username\n\
