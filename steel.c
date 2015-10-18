@@ -76,6 +76,11 @@ int main(int argc, char *argv[])
 {
 	int option;
 
+	if(argc == 1) {
+		usage();
+		return 0;
+	}
+		
 	while(true) {
 
 		static struct option long_options[] =
