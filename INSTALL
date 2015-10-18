@@ -1,0 +1,24 @@
+At the moment there's no binary packages available for Steel, so you will need 
+to compile Steel from the source code. It's easy and fast. Steel depends on SQLite, 
+Mhash and Libmcrypt. Of course also GCC and GNU Make are required.
+
+To install the dependencies on Ubuntu 14.04:
+
+      sudo apt-get install libmhash-dev libmcrypt-dev libsqlite3-dev
+    
+To install the dependencies on Archlinux:
+
+      sudo pacman -S libmcrypt mhash sqlite
+    
+To download the source code of Steel, you have two choices. Either get the 
+latest code from Gitlab or download the latest stable version of Steel. 
+It's recommend to get the stable version, as the development version might have 
+bugs and it might have not been tested very well.
+
+To install Steel move to Steel source code directory and type following commands:
+
+      make
+      sudo make install
+    
+Steel will be installed on /usr/local/bin/ by default. Man page will be installed 
+to /usr/local/share/man/man1/. 
