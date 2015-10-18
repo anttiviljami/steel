@@ -41,7 +41,7 @@ install: all
 	if [ ! -d $(PREFIX)/share/man/man1 ];then	\
 		mkdir -p $(PREFIX)/share/man/man1;	\
 	fi
-	cp memo.1 $(PREFIX)/share/man/man1/
+	cp steel.1 $(PREFIX)/share/man/man1/
 	gzip -f $(PREFIX)/share/man/man1/steel.1
 	cp steel $(PREFIX)/bin/
 
