@@ -41,7 +41,7 @@ OPTIONS\n\
 -c, --close                                           Close open database\n\
 -a, --add               <title> <user> <url> <notes>  Add new entry to database\n\
 -s, --show              <id>                          Show entry by id\n\
--g, --gen-pass                                        Generate secure password\n\
+-g, --gen-pass          <length>                      Generate secure password\n\
 -d, --delete            <id>                          Delete an entry by id\n\
 -r, --replace           <id> <what> [content]         Replace an entry data\n\
 						      <what> can be either \"user\",\n\
