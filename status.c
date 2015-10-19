@@ -123,7 +123,7 @@ char *status_read_file_line(FILE *fp)
 	ssize_t read;
 	static char *retval = NULL;
 	
-	if( (read = getline(&line, &len, fp) == -1) )
+	if( (read = getline(&line, &len, fp)) == -1 )
 		return NULL;
 
 	//We don't want the trailing new line
