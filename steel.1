@@ -87,6 +87,9 @@ Steel does not have a concept of "change master passphrase". When you close
 an open database using --close you can type a master passphrase. This passphrase
 is then  required to open the database. You can change the master passphrase
 everytime when you close the database, if you want to.
+.PP
+Note that while using xclip example above might be useful, the passphrase will
+be in you clipboard as plain text.
 .SH FILES
 .I $HOME/.steel_open
 .I $HOME/.steel_dbs
