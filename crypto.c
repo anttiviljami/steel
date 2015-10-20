@@ -17,12 +17,14 @@
  * along with Steel.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#define _XOPEN_SOURCE 700
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <mcrypt.h>
 #include <stdint.h>
 #include <mhash.h>
+#include <unistd.h>
 #include <time.h>
 
 #include "crypto.h"
@@ -699,8 +701,10 @@ char *generate_pass(int count)
 	"0123456789";
 	unsigned int max;
 	unsigned int number;
-
-	srand(time(NULL));
+	struct timespec tspec;
+	
+	clock_gettime(CLOCK_MONOTONIC, &tspec);
+	srand(tspec.tv_nsec);
 	
 	max = strlen(alpha) - 1;
 
