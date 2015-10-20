@@ -83,9 +83,9 @@ You will need to install xclip, if it's not already installed on your system.
 If you want to export all entries to a file:
        steel --list-all > file.txt
 .SH NOTES
-Steel does not have a concept of "change master passphrase". When you close
+Steel does not have a concept of "change master passphrase". When you close (encrypt)
 an open database using --close you can type a master passphrase. This passphrase
-is then  required to open the database. You can change the master passphrase
+is then  required to open (decrypt) the database. You can change the master passphrase
 everytime when you close the database, if you want to.
 .PP
 Note that while using xclip example above might be useful, the passphrase will
