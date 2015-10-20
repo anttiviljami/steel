@@ -25,7 +25,7 @@
 #include <getopt.h>
 #include "cmd_ui.h"
 
-#define VERSION 0.9
+#define VERSION 1.0
 
 static void usage()
 {
@@ -37,8 +37,8 @@ steel [options]\n\
 OPTIONS\n\
 \n\
 -i, --init-new          <path>                        Create a new database\n\
--o, --open              <path>                        Open an existing database\n\
--c, --close                                           Close open database\n\
+-o, --open              <path>                        Decrypt existing database\n\
+-c, --close                                           Encrypt open database\n\
 -a, --add               <title> <user> <url> <notes>  Add new entry to database\n\
 -s, --show              <id>                          Show entry by id\n\
 -g, --gen-pass          <length>                      Generate secure password\n\
