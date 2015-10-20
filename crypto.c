@@ -95,7 +95,7 @@ static bool write_bcrypt_hash(FILE *fOut, const char *passphrase)
 	char hash[BCRYPT_HASHSIZE] = {0};
 	int ret;
 	
-	ret = bcrypt_gensalt(12, salt);
+	ret = bcrypt_gensalt(BCRYPT_WORK_FACTOR, salt);
 
 	if(ret != 0) {
 		fprintf(stderr, "Could not generate salt\n");
@@ -123,7 +123,8 @@ static Key_t generate_key(const char *passphrase, bool *success)
 	int ret;
 	char *keybytes = NULL;
 	Key_t key;
-	char *saltbytes = NULL;
+	char salt[BCRYPT_HASHSIZE];
+	char hash[BCRYPT_HASHSIZE] = {0};
 	
 	keybytes = calloc(1, KEY_SIZE);
 
@@ -133,33 +134,39 @@ static Key_t generate_key(const char *passphrase, bool *success)
 		return key;
 	}
 
-	saltbytes = generate_random_data(SALT_SIZE);
-	
-	if(saltbytes == NULL) {
+	ret = bcrypt_gensalt(BCRYPT_WORK_FACTOR, salt);
+
+	if(ret != 0) {
 		fprintf(stderr, "Could not generate salt\n");
+		free(keybytes);
+		*success = false;
+		return key;
+	}
+
+	ret = bcrypt_hashpw(passphrase, salt, hash);
+
+	if(ret != 0) {
+		fprintf(stderr, "Could not hash password\n");
 		free(keybytes);
 		*success = false;
 		return key;
 	}
 	
 	ret = mhash_keygen(KEYGEN_MCRYPT, MHASH_SHA256, 0, keybytes,
-			KEY_SIZE, saltbytes, SALT_SIZE, (uint8_t *)passphrase,
-			(uint32_t)strlen(passphrase));
+			KEY_SIZE, salt, BCRYPT_HASHSIZE, (uint8_t *)hash,
+			(uint32_t)strlen(hash));
 	
 	if(ret < 0) {
 		fprintf(stderr, "Key generation failed\n");
 		free(keybytes);
-		free(saltbytes);
 		*success = false;
 		return key;
 	}
 
 	memmove(key.data, keybytes, KEY_SIZE);
-	memmove(key.salt, saltbytes, SALT_SIZE);
+	memmove(key.salt, salt, BCRYPT_HASHSIZE);
 	
 	free(keybytes);
-	free(saltbytes);
-
 	*success = true;
 	
 	return key;
@@ -172,7 +179,8 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 	int ret;
 	char *keybytes = NULL;
 	Key_t key;
-	
+	char hash[BCRYPT_HASHSIZE] = {0};
+		
 	keybytes = calloc(1, KEY_SIZE);
 
 	if(!keybytes) {
@@ -181,9 +189,18 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 		return key;
 	}
 
+	ret = bcrypt_hashpw(passphrase, salt, hash);
+
+	if(ret != 0) {
+		fprintf(stderr, "Could not hash password\n");
+		free(keybytes);
+		*success = false;
+		return key;
+	}
+	
 	ret = mhash_keygen(KEYGEN_MCRYPT, MHASH_SHA256, 0, keybytes,
-			KEY_SIZE, salt, SALT_SIZE, (uint8_t *)passphrase,
-			(uint32_t)strlen(passphrase));
+			KEY_SIZE, salt, BCRYPT_HASHSIZE, (uint8_t *)hash,
+			(uint32_t)strlen(hash));
 
 	if(ret < 0) {
 		fprintf(stderr, "Key generation failed\n");
@@ -193,7 +210,7 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 	}
 	
 	memmove(key.data, keybytes, KEY_SIZE);
-	memmove(key.salt, salt, SALT_SIZE);
+	memmove(key.salt, salt, BCRYPT_HASHSIZE);
 
 	free(keybytes);
 	
@@ -456,7 +473,7 @@ bool encrypt_file(const char *path, const char *passphrase)
 	//Write our magic header, iv and salt of the key to the file
 	fwrite((void *)&MAGIC_HEADER, sizeof(MAGIC_HEADER), 1, fOut);
 	fwrite(IV, 1, IV_SIZE, fOut);
-	fwrite(key.salt, 1, SALT_SIZE, fOut);
+	fwrite(key.salt, 1, BCRYPT_HASHSIZE, fOut);
 
 	//Encrypt rest of the file content (the actual data,
 	//that needs to be protected)
@@ -519,7 +536,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 		return false;
 	}
 
-	salt = malloc(SALT_SIZE);
+	salt = malloc(BCRYPT_HASHSIZE);
 
 	if(salt == NULL) {
 		fprintf(stderr, "Malloc failed\n");
@@ -554,7 +571,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 	fseek(fIn, sizeof(int), SEEK_CUR);
 
 	fread(IV, IV_SIZE, 1, fIn);
-	fread(salt, SALT_SIZE, 1, fIn);
+	fread(salt, BCRYPT_HASHSIZE, 1, fIn);
 
 	//Verify passphrase
 	if(!verify_passphrase(passphrase, hash)) {

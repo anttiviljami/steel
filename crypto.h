@@ -23,8 +23,8 @@
 
 #define KEY_SIZE (32) //256 bits
 #define IV_SIZE (32) //256 bits
-#define SALT_SIZE (8) //64 bits
 #define HMAC_SIZE (32) //256 bits
+#define BCRYPT_WORK_FACTOR (12)
 
 typedef struct Key
 {
@@ -32,7 +32,7 @@ typedef struct Key
 	//arrays in the file scope
 	
 	char data[32]; //KEY_SIZE
-	char salt[8];  //SALT_SIZE
+	char salt[64];  //BCRYPT_HASHSIZE
 
 } Key_t;
 
