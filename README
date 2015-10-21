@@ -1,7 +1,7 @@
 Steel - Command line password manager
 
 Password management belongs to the command line. Deep into the Unix heartland, 
-the shell. With Steel your passwords are safe. Steel uses AES encryption in CFB 
+the shell. With Steel your passwords are safe. Steel uses RIJNDAEL encryption in CFB 
 mode with 256 bit keys. Steel is simple, Steel is advanced, Steel is adaptable. 
 Steel is the new prophet of password management.
 
