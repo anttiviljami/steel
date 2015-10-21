@@ -146,7 +146,7 @@ static Key_t generate_key(const char *passphrase, bool *success)
 	}
 
 	ret = bcrypt_hashpw(passphrase, salt, hash);
-
+	
 	if(ret != 0) {
 		fprintf(stderr, "Could not hash password\n");
 		free(keybytes);

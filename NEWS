@@ -1,3 +1,18 @@
+1.0: 2015-10-20
+
+    Version 1.0 released.
+
+    This is a very important security fix release. Everyone must upgrade.
+
+    Before upgrading make sure you decrypt (open) your existing database.
+    Otherwise you will not be able to open it anymore.
+
+    This releases fixes a security flaw where encryption key was derived by
+    SHA256 algorithm only. Version 1.0 now uses bcrypt algorithm together with
+    SHA256. This release also uses better seed for generating random
+    passwords. (-g, --gen-pass).
+
+
 0.9: 2015-10-18
 	Version 0.9 of Steel released.
 	This the initial public stable release of command line password manager 
