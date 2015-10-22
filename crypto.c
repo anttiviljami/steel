@@ -709,7 +709,7 @@ char *generate_pass(int count)
 	struct timespec tspec;
 
 #ifdef __MACH__
-	// OS X does not have clock_gettime, use clock_get_time
+	//OS X does not have clock_gettime, use clock_get_time
 	clock_serv_t cclock;
 	mach_timespec_t mts;
 	host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
