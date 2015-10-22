@@ -27,6 +27,17 @@
 
 #define VERSION 1.0
 
+static void version_print()
+{
+	char *str = "This is free software; see the source for copying conditions.\n" \
+	"There is no warranty; not even for MERCHANTABILITY or FITNESS\n" \
+	"FOR A PARTICULAR PURPOSE.\n";
+	
+	printf("Steel v%.1f Copyright (c) Niko Rosvall <niko@byteptr.com>\n", 
+	       VERSION);
+	printf(str);
+}
+
 static void usage()
 {
 #define HELP "\
@@ -222,7 +233,7 @@ int main(int argc, char *argv[])
 			show_database_statuses();
 			break;
 		case 'V':
-			printf("Steel v%.1f Copyright (c) Niko Rosvall\n", VERSION);
+			version_print();
 			break;
 		case 'h':
 			usage();
