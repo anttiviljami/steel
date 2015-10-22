@@ -437,7 +437,7 @@ void show_database_statuses()
 {
 	int count;
 	FILE *fp = NULL;
-	char *line = NULL;
+	//char *line = NULL;
 	
 	if(!steel_tracker_file_exists())
 		return;
@@ -458,7 +458,7 @@ void show_database_statuses()
 	rewind(fp);
 	
 	while(count >= 0) {
-
+		char *line = NULL;
 		line = status_read_file_line(fp);
 
 		if(line == NULL) {
@@ -474,6 +474,7 @@ void show_database_statuses()
 			//Move to the entry of the steel_dbs
 			status_del_tracking(line);
 			count--;
+			free(line);
 			continue;
 		}
 
@@ -483,12 +484,11 @@ void show_database_statuses()
 		else
 			fprintf(stdout, "%s\t%s\t%s\n", "[Decrypted]", 
 				db_last_modified(line), line);
-
-		free(line);
 		
+		free(line);
 		count--;
 	}
-
+	
 	fclose(fp);
 }
 

@@ -118,18 +118,35 @@ char *status_read_file_line(FILE *fp)
 	if(fp == NULL)
 		return NULL;
 
-	char *line = NULL;
-	size_t len = 0;
+	//static char line[256] = {0};
+	//char *lineptr = line;
+	char *lineptr = NULL;
+	size_t len = 256;
 	ssize_t read;
-	static char *retval = NULL;
+	char *retval = NULL;
+	char *returnline = NULL;
 	
-	if( (read = getline(&line, &len, fp)) == -1 )
+	lineptr = calloc(1, len * sizeof(char));
+	
+	if(lineptr == NULL) {
+		fprintf(stderr, "Malloc failed.\n");
 		return NULL;
+	}
+	
+	if( (read = getline(&lineptr, &len, fp)) == -1 ) {
+		free(lineptr);
+		return NULL;
+	}
 
 	//We don't want the trailing new line
-	retval = strtok(line, "\n");
+	retval = strtok(lineptr, "\n");
 
-	return retval;
+	returnline = calloc(1, (strlen(retval) + 1) * sizeof(char));
+	strcpy(returnline, retval);
+	
+	free(lineptr);
+	
+	return returnline;
 }
 
 //Returns FILE pointer, file opened in mode
@@ -231,6 +248,8 @@ int status_del_tracking(const char *path)
 
 		current++;
 		count--;
+		
+		free(line);
 	}
 
 	fclose(fp);

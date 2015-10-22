@@ -133,29 +133,44 @@ char *read_path_from_lockfile()
 {
 	char *lockfile = NULL;
 	FILE *fp = NULL;
-	static char *data = NULL;
-	size_t len = 0;
+	char *data = NULL;
+	char *line = NULL;
+	size_t len = 256;
+	
+	//Preallocate data, even thought getline will allocate the space.
+	//However on some operating systems this is needed so we can safely
+	//free data.
+	data = malloc(len * sizeof(char));
+	
+	if(data == NULL) {
+		fprintf(stderr, "Malloc failed.\n");
+		return NULL;
+	}
 	
 	lockfile = get_lockfile_path();
 
-	if(lockfile == NULL)
+	if(lockfile == NULL) {
+		free(data);
 		return NULL;
+	}
 
 	fp = fopen(lockfile, "r");
 
 	if(!fp) {
+		free(data);
 		free(lockfile);
 		return NULL;
 	}
 
+	line = data;
 	//We only need to read the first line of the file,
 	//it contains the path to the currently open db file
-	getline(&data, &len, fp);
+	getline(&line, &len, fp);
 	
 	fclose(fp);
 	free(lockfile);
 
-	return data;
+	return line;
 }
 
 //This function is used of to make basic checks before operating with there
@@ -293,15 +308,17 @@ bool db_add_entry(Entry_t *entry)
 	int rc;
 	sqlite3 *db;
 	char *path = NULL;
+	char *filep = NULL;
 	char *error = NULL;
 	char *sql;
 
 	path = read_path_from_lockfile();
+	filep = path;
 	
-	if(!db_make_sanity_check(path)) {
+	if(!db_make_sanity_check(filep)) {
 		
 		if(path != NULL)
-			free(path);
+			free(filep);
 		
 		return false;
 	}

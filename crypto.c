@@ -275,7 +275,7 @@ unsigned char *get_data_hmac(const char *data, long datalen, Key_t key)
 	}
 
 	mhash(td, data, datalen);
-	 mac = mhash_hmac_end(td);
+	mac = mhash_hmac_end(td);
 
 	return mac;
 }
