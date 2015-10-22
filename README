@@ -1,8 +1,8 @@
 Steel - Command line password manager
 
-Password management belongs to the command line. Deep into the Unix heartland, 
-the shell. With Steel your passwords are safe. Steel uses RIJNDAEL encryption in CFB 
-mode with 256 bit keys. Steel is simple, Steel is advanced, Steel is adaptable. 
+Password management belongs to the command line. Deep into the Unix heartland,
+the shell. With Steel your passwords are safe. Steel uses RIJNDAEL encryption in CFB
+mode with 256 bit keys. Steel is simple, Steel is advanced, Steel is adaptable.
 Steel is the new prophet of password management.
 
 Steel is Free Software under the GPLv3+ license.
@@ -10,4 +10,9 @@ Steel is Free Software under the GPLv3+ license.
 Steel is developed and tested on GNU/Linux but it probably runs on other Unix
 like operating systems too.
 
+For installing see the INSTALL file.
+
 For more information see http://www.steelpasswordmanager.org.
+
+
+

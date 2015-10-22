@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Steel.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Steel. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #define _XOPEN_SOURCE 700
@@ -26,6 +26,11 @@
 #include <mhash.h>
 #include <unistd.h>
 #include <time.h>
+
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
 
 #include "crypto.h"
 #include "bcrypt/bcrypt.h"
@@ -96,7 +101,7 @@ static bool write_bcrypt_hash(FILE *fOut, const char *passphrase)
 	char salt[BCRYPT_HASHSIZE];
 	char hash[BCRYPT_HASHSIZE] = {0};
 	int ret;
-	
+
 	ret = bcrypt_gensalt(BCRYPT_WORK_FACTOR, salt);
 
 	if(ret != 0) {
@@ -112,7 +117,7 @@ static bool write_bcrypt_hash(FILE *fOut, const char *passphrase)
 	}
 
 	fwrite(hash, 1, BCRYPT_HASHSIZE, fOut);
-	
+
 	return true;
 }
 
@@ -127,7 +132,7 @@ static Key_t generate_key(const char *passphrase, bool *success)
 	Key_t key;
 	char salt[BCRYPT_HASHSIZE];
 	char hash[BCRYPT_HASHSIZE] = {0};
-	
+
 	keybytes = calloc(1, KEY_SIZE);
 
 	if(!keybytes) {
@@ -146,18 +151,18 @@ static Key_t generate_key(const char *passphrase, bool *success)
 	}
 
 	ret = bcrypt_hashpw(passphrase, salt, hash);
-	
+
 	if(ret != 0) {
 		fprintf(stderr, "Could not hash password\n");
 		free(keybytes);
 		*success = false;
 		return key;
 	}
-	
+
 	ret = mhash_keygen(KEYGEN_MCRYPT, MHASH_SHA256, 0, keybytes,
 			KEY_SIZE, salt, BCRYPT_HASHSIZE, (uint8_t *)hash,
 			(uint32_t)strlen(hash));
-	
+
 	if(ret < 0) {
 		fprintf(stderr, "Key generation failed\n");
 		free(keybytes);
@@ -167,10 +172,10 @@ static Key_t generate_key(const char *passphrase, bool *success)
 
 	memmove(key.data, keybytes, KEY_SIZE);
 	memmove(key.salt, salt, BCRYPT_HASHSIZE);
-	
+
 	free(keybytes);
 	*success = true;
-	
+
 	return key;
 }
 
@@ -182,7 +187,7 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 	char *keybytes = NULL;
 	Key_t key;
 	char hash[BCRYPT_HASHSIZE] = {0};
-		
+
 	keybytes = calloc(1, KEY_SIZE);
 
 	if(!keybytes) {
@@ -199,7 +204,7 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 		*success = false;
 		return key;
 	}
-	
+
 	ret = mhash_keygen(KEYGEN_MCRYPT, MHASH_SHA256, 0, keybytes,
 			KEY_SIZE, salt, BCRYPT_HASHSIZE, (uint8_t *)hash,
 			(uint32_t)strlen(hash));
@@ -210,14 +215,14 @@ static Key_t generate_key_salt(const char *passphrase, char *salt, bool *success
 		*success = false;
 		return key;
 	}
-	
+
 	memmove(key.data, keybytes, KEY_SIZE);
 	memmove(key.salt, salt, BCRYPT_HASHSIZE);
 
 	free(keybytes);
-	
+
 	*success = true;
-	
+
 	return key;
 }
 
@@ -245,11 +250,11 @@ static unsigned int rand_between(unsigned int min, unsigned int max)
 bool verify_hmac(const unsigned char *old, const unsigned char *new)
 {
 	for(int i = 0; i < HMAC_SIZE; i++) {
-	
+
 		if(old[i] != new[i])
 			return false;
 	}
-	
+
 	return true;
 }
 
@@ -265,13 +270,13 @@ unsigned char *get_data_hmac(const char *data, long datalen, Key_t key)
 
 	if(td == MHASH_FAILED) {
 		fprintf(stderr, "Failed to initialize mhash\n");
-		
+
 		return NULL;
 	}
-	
+
 	mhash(td, data, datalen);
-        mac = mhash_hmac_end(td);
-	
+	 mac = mhash_hmac_end(td);
+
 	return mac;
 }
 
@@ -289,7 +294,7 @@ bool hmac_file_content(const char *path, Key_t key)
 	char *data = NULL;
 	long datalen;
 	FILE *fOut = NULL;
-	
+
 	fp = fopen(path, "r");
 
 	if(fp == NULL) {
@@ -317,7 +322,7 @@ bool hmac_file_content(const char *path, Key_t key)
 	fclose(fp);
 
 	mac = get_data_hmac(data, datalen, key);
-	
+
 	fOut = fopen(path, "a");
 
 	if(fOut == NULL) {
@@ -333,7 +338,7 @@ bool hmac_file_content(const char *path, Key_t key)
 
 	free(mac);
 	free(data);
-	
+
 	return true;
 }
 
@@ -344,7 +349,7 @@ bool is_file_encrypted(const char *path)
 {
 	FILE *fp = NULL;
 	int data;
-	
+
 	fp = fopen(path, "r");
 
 	if(fp == NULL) {
@@ -354,13 +359,13 @@ bool is_file_encrypted(const char *path)
 
 	//Skip hash, we don't need it here
 	fseek(fp, BCRYPT_HASHSIZE, SEEK_SET);
-	
+
 	fread((void *)&data, sizeof(MAGIC_HEADER), 1, fp);
 	fclose(fp);
 
 	if(data != MAGIC_HEADER)
 		return false;
-	
+
 	return true;
 }
 
@@ -369,12 +374,12 @@ bool is_file_encrypted(const char *path)
 bool verify_passphrase(const char *passphrase, const char *hash)
 {
 	int ret;
-	
+
 	ret = bcrypt_checkpw(passphrase ,hash);
 
 	if(ret != 0)
 		return false;
-	
+
 	return true;
 }
 
@@ -391,19 +396,19 @@ bool encrypt_file(const char *path, const char *passphrase)
 	FILE *fOut = NULL;
 	char *output_filename = NULL;
 	bool success;
-	
+
 	if(is_file_encrypted(path)) {
 		fprintf(stderr, "File is already encrypted.\n");
 		return false;
 	}
-	
+
 	key = generate_key(passphrase, &success);
-	
+
 	if(!success) {
 		fprintf(stderr, "Failed to get new key\n");
 		return false;
 	}
-	
+
 	td = mcrypt_module_open("rijndael-256", NULL, "cfb", NULL);
 
 	if(td == MCRYPT_FAILED) {
@@ -429,7 +434,7 @@ bool encrypt_file(const char *path, const char *passphrase)
 		free(IV);
 		mcrypt_generic_deinit(td);
 		mcrypt_module_close(td);
-		
+
 		return false;
 	}
 
@@ -440,7 +445,7 @@ bool encrypt_file(const char *path, const char *passphrase)
 		free(IV);
 		mcrypt_generic_deinit(td);
 		mcrypt_module_close(td);
-		
+
 		return false;
 	}
 
@@ -455,7 +460,7 @@ bool encrypt_file(const char *path, const char *passphrase)
 		free(output_filename);
 		mcrypt_generic_deinit(td);
 		mcrypt_module_close(td);
-		
+
 		return false;
 	}
 
@@ -468,7 +473,7 @@ bool encrypt_file(const char *path, const char *passphrase)
 		free(output_filename);
 		mcrypt_generic_deinit(td);
 		mcrypt_module_close(td);
-		
+
 		return false;
 	}
 
@@ -483,12 +488,12 @@ bool encrypt_file(const char *path, const char *passphrase)
 		mcrypt_generic(td, &block, 1);
 		fwrite(&block, 1, 1, fOut);
 	}
-	
+
 	mcrypt_generic_deinit(td);
 	mcrypt_module_close(td);
 
 	free(IV);
-	
+
 	fclose(fIn);
 	fclose(fOut);
 
@@ -504,7 +509,7 @@ bool encrypt_file(const char *path, const char *passphrase)
 		free(output_filename);
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -530,7 +535,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 		fprintf(stderr, "File is not encrypted with Steel\n");
 		return false;
 	}
-	
+
 	IV = malloc(IV_SIZE);
 
 	if(IV == NULL) {
@@ -544,7 +549,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 		fprintf(stderr, "Malloc failed\n");
 		return false;
 	}
-	
+
 	fIn = fopen(path, "r");
 
 	if(!fIn) {
@@ -601,7 +606,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 	}
 
 	free(new_mac);
-	
+
 	if(!success) {
 		fprintf(stderr, "Failed to get new key\n");
 		free(IV);
@@ -609,7 +614,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 		fclose(fIn);
 		return false;
 	}
-	
+
 	td = mcrypt_module_open("rijndael-256", NULL, "cfb", NULL);
 
 	if(td == MCRYPT_FAILED) {
@@ -617,7 +622,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 		free(IV);
 		free(salt);
 		fclose(fIn);
-		
+
 		return false;
 	}
 
@@ -630,7 +635,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 		fclose(fIn);
 		mcrypt_generic_deinit(td);
 		mcrypt_module_close(td);
-		
+
 		return false;
 	}
 
@@ -646,7 +651,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 		free(output_filename);
 		mcrypt_generic_deinit(td);
 		mcrypt_module_close(td);
-		
+
 		return false;
 	}
 
@@ -655,7 +660,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 		//Decrypt data until the hmac
 		if(ftell(fIn) == len_before_hmac)
 			break;
-		
+
 		if(mdecrypt_generic(td, &block, 1) != 0) {
 			//If decryption fails, abort and remove output file
 			fprintf(stderr, "Decryption failed\n");
@@ -663,13 +668,13 @@ bool decrypt_file(const char *path, const char *passphrase)
 			decryption_failed = true;
 			break;
 		}
-		
+
 		fwrite(&block, 1, 1, fOut);
 	}
 
 	mcrypt_generic_deinit(td);
 	mcrypt_module_close(td);
-	
+
 	free(IV);
 	free(salt);
 
@@ -683,7 +688,7 @@ bool decrypt_file(const char *path, const char *passphrase)
 	}
 
 	free(output_filename);
-	
+
 	return true;
 }
 
@@ -702,10 +707,20 @@ char *generate_pass(int count)
 	unsigned int max;
 	unsigned int number;
 	struct timespec tspec;
-	
+
+#ifdef __MACH__
+	//OS X does not have clock_gettime, use clock_get_time
+	clock_serv_t cclock;
+	mach_timespec_t mts;
+	host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+	clock_get_time(cclock, &mts);
+	mach_port_deallocate(mach_task_self(), cclock);
+#else
 	clock_gettime(CLOCK_MONOTONIC, &tspec);
+#endif
+
 	srand(tspec.tv_nsec);
-	
+
 	max = strlen(alpha) - 1;
 
 	pass = calloc(1, (count + 1) * sizeof(char));

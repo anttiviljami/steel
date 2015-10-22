@@ -9,11 +9,15 @@ To install the dependencies on Ubuntu 14.04:
 To install the dependencies on Archlinux:
 
       sudo pacman -S libmcrypt mhash sqlite
-    
-To download the source code of Steel, you have two choices. Either get the 
-latest code from Gitlab or download the latest stable version of Steel. 
-It's recommend to get the stable version, as the development version might have 
-bugs and it might have not been tested very well.
+      
+To install on OS X:
+
+For OS X, you need to first install libsqlite3 libmcrypt, and have XCode installed
+
+With Homebrew:
+
+	brew install mcrypt sqlite
+
 
 To install Steel move to Steel source code directory and type following commands:
 
