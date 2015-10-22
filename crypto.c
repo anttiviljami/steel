@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Steel.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Steel. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #define _XOPEN_SOURCE 700
@@ -275,7 +275,7 @@ unsigned char *get_data_hmac(const char *data, long datalen, Key_t key)
 	}
 
 	mhash(td, data, datalen);
-        mac = mhash_hmac_end(td);
+	 mac = mhash_hmac_end(td);
 
 	return mac;
 }
@@ -709,14 +709,12 @@ char *generate_pass(int count)
 	struct timespec tspec;
 
 #ifdef __MACH__
-  // OS X does not have clock_gettime, use clock_get_time
-  clock_serv_t cclock;
-  mach_timespec_t mts;
-  host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
-  clock_get_time(cclock, &mts);
-  mach_port_deallocate(mach_task_self(), cclock);
-//    time->tv_sec = mts.tv_sec;
-//    time->tv_nsec = mts.tv_nsec;
+	// OS X does not have clock_gettime, use clock_get_time
+	clock_serv_t cclock;
+	mach_timespec_t mts;
+	host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+	clock_get_time(cclock, &mts);
+	mach_port_deallocate(mach_task_self(), cclock);
 #else
 	clock_gettime(CLOCK_MONOTONIC, &tspec);
 #endif
