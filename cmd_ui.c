@@ -483,23 +483,26 @@ void replace_part(int id, const char *what, const char *new_data)
 //Function generates new password and prints it to stdout.
 //Does not use the database, so this function can be called
 //even if the database is encrypted.
-void generate_password(int count)
+void generate_password(int length, int count)
 {
-	if(count < 6) {
+	if(length < 6) {
 		fprintf(stderr, "Minimum length is 6 characters.\n");
 		return;
 	}
 	
-	char *pass = generate_pass(count);
-	
-	if(pass == NULL) {
-		fprintf(stderr, "Generating new password failed.\n");
-		return;
+	for(int i = 0; i < count; i++) {
+		
+		char *pass = generate_pass(length);
+		
+		if(pass == NULL) {
+			fprintf(stderr, "Generating new password failed.\n");
+			return;
+		}
+		
+		printf("%s\n", pass);
+		
+		free(pass);
 	}
-	
-	printf("%s\n", pass);
-	
-	free(pass);
 }
 
 //Show all tracked databases, including their encryption status and last

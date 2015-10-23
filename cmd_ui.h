@@ -36,7 +36,7 @@ void delete_entry(int id);
 void find_entries(const char *search);
 size_t my_getpass(char *prompt, char **lineptr, size_t *n, FILE *stream);
 void replace_part(int id, const char *what, const char *new_data);
-void generate_password(int count);
+void generate_password(int length, int count);
 void show_database_statuses();
 void remove_database(const char *path);
 void backup_database(const char *source, const char *dest);

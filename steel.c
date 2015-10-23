@@ -52,7 +52,7 @@ OPTIONS\n\
 -c, --close                                           Encrypt open database\n\
 -a, --add               <title> <user> <url> <notes>  Add new entry to database\n\
 -s, --show              <id>                          Show entry by id\n\
--g, --gen-pass          <length>                      Generate secure password\n\
+-g, --gen-pass          <length> [count]              Generate secure password\n\
 -d, --delete            <id>                          Delete an entry by id\n\
 -r, --replace           <id> <what> [content]         Replace an entry data\n\
 						      <what> can be either \"user\",\n\
@@ -155,9 +155,19 @@ int main(int argc, char *argv[])
 		case 's':
 			show_one_entry(atoi(optarg));
 			break;
-		case 'g':
-			generate_password(atoi(optarg));
+		case 'g': {
+			int count = 1;
+			
+			if(argv[optind]) {
+				count = atoi(argv[optind]);
+				
+				if(count < 1)
+					count = 1;
+			}
+			
+			generate_password(atoi(optarg), count);
 			break;
+		}
 		case 'a': {
 			//Has user?
 			if(!argv[optind]) {

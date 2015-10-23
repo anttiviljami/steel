@@ -695,9 +695,9 @@ bool decrypt_file(const char *path, const char *passphrase)
 //Generate passphrase. Param count is there
 //length of the passphrase. Actually, at the moment
 //this function does not generate passphrases, but just passwords.
-char *generate_pass(int count)
+char *generate_pass(int length)
 {
-	if(count < 0 || count > RAND_MAX)
+	if(length < 0 || length > RAND_MAX)
 		return NULL;
 
 	char *pass = NULL;
@@ -723,15 +723,15 @@ char *generate_pass(int count)
 
 	max = strlen(alpha) - 1;
 
-	pass = calloc(1, (count + 1) * sizeof(char));
+	pass = calloc(1, (length + 1) * sizeof(char));
 
 	if(pass == NULL)
 		return NULL;
 
-	for(int i = 0; i < count; i++) {
+	for(int j = 0; j < length; j++) {
 		number = rand_between(0, max);
-		pass[i] = alpha[number];
+		pass[j] = alpha[number];
 	}
-
+	
 	return pass;
 }
