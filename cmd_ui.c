@@ -21,6 +21,7 @@
 #define _XOPEN_SOURCE 700
 
 #include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -33,6 +34,56 @@
 
 //cmd_ui.c implements simple interface for command line version
 //of Steel. All functions in here are only called from main()
+
+//Function works like strstr, but ignores the case.
+//There's a function strcasestr, but it's nonstandard
+//GNU extension, so let's not use that.
+//Return value must be freed by the caller.
+static char *my_strcasestr(const char *str, const char *str2)
+{
+	char *tmp1 = NULL;
+	char *tmp2 = NULL;
+	char *tmp3 = NULL;
+	char *retval = NULL;
+
+	tmp1 = strdup(str);
+
+	if (tmp1 == NULL) {
+		fprintf(stderr, "Strdup failed\n");
+		return NULL;
+	}
+
+	tmp2 = strdup(str2);
+
+	if (tmp2 == NULL) {
+		free(tmp1);
+		fprintf(stderr, "Strdup failed\n");
+		return NULL;
+	}
+
+	for (int i = 0; i < strlen(tmp1); i++)
+		tmp1[i] = tolower(tmp1[i]);
+
+	for (int i = 0; i < strlen(tmp2); i++)
+		tmp2[i] = tolower(tmp2[i]);
+
+	tmp3 = strstr(tmp1, tmp2);
+
+	if (tmp3 != NULL) {
+		retval = strdup(tmp3);
+		/* Sanity check
+		 * Inform the user that something went wrong
+		 * even the search term was found. Probably never happens.
+		 */
+		if (retval == NULL)
+			fprintf(stderr,"Search term found, but strdup failed.\n");
+	}
+
+	free(tmp1);
+	free(tmp2);
+
+	return retval;
+}
 
 //Simple helper function to check if there's an open database
 //available.
@@ -264,6 +315,10 @@ void find_entries(const char *search)
 		return;
 	
 	Entry_t *list = db_get_all_entries();
+	char *title = NULL;
+	char *user = NULL;
+	char *url = NULL;
+	char *notes = NULL;
 	
 	if(list == NULL) {
 		fprintf(stderr, "Cannot perform the search operation.\n");
@@ -274,15 +329,31 @@ void find_entries(const char *search)
 	
 	while(new_head != NULL) {
 		
-		//Search for matching data	
-		if(strstr(new_head->title, search) != NULL || 
-			strstr(new_head->user, search) != NULL ||
-			strstr(new_head->url, search) != NULL ||
-			strstr(new_head->notes, search) != NULL) {
+		//Search for matching data
+		title = my_strcasestr(new_head->title, search);
+		user = my_strcasestr(new_head->user, search);
+		url = my_strcasestr(new_head->url, search);
+		notes = my_strcasestr(new_head->notes, search);
+		
+		//Check if we found something
+		if(title != NULL || user != NULL || url != NULL || 
+			notes != NULL) {
 			
 			list_print_one(new_head);
 		}
-				
+		
+		if(title != NULL)
+			free(title);
+		
+		if(user != NULL)
+			free(user);
+		
+		if(url != NULL)
+			free(url);
+		
+		if(notes != NULL)
+			free(notes);
+		
 		new_head = new_head->next;
 	}
 	
