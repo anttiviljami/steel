@@ -32,10 +32,10 @@ static void version_print()
 	char *str = "This is free software; see the source for copying conditions.\n" \
 	"There is no warranty; not even for MERCHANTABILITY or FITNESS\n" \
 	"FOR A PARTICULAR PURPOSE.\n";
-	
-	printf("Steel v%.1f Copyright (c) Niko Rosvall <niko@byteptr.com>\n", 
+
+	printf("Steel v%.1f Copyright (c) Niko Rosvall <niko@byteptr.com>\n",
 	       VERSION);
-	printf(str);
+	printf("%s", str);
 }
 
 static void usage()
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 		usage();
 		return 0;
 	}
-		
+
 	while(true) {
 
 		static struct option long_options[] =
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 
 		int option_index = 0;
 
-		option = getopt_long(argc, argv, "i:b:B:o:cs:g:a:d:r:f:lR:SVp:u:U:n:h", 
+		option = getopt_long(argc, argv, "i:b:B:o:cs:g:a:d:r:f:lR:SVp:u:U:n:h",
 				     long_options, &option_index);
 
 		if(option == -1)
@@ -157,14 +157,14 @@ int main(int argc, char *argv[])
 			break;
 		case 'g': {
 			int count = 1;
-			
+
 			if(argv[optind]) {
 				count = atoi(argv[optind]);
-				
+
 				if(count < 1)
 					count = 1;
 			}
-			
+
 			generate_password(atoi(optarg), count);
 			break;
 		}
@@ -184,14 +184,14 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Missing option note\n");
 				return 0;
 			}
-			
+
 			char *title = optarg;
 			char *user = argv[optind];
 			char *url = argv[optind + 1];
 			char *note = argv[optind + 2];
-			
+
 			add_new_entry(title, user, url, note);
-			
+
 			break;
 		}
 		case 'd':
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Missing option, see -h for help\n");
 				return 0;
 			}
-			
+
 			//Replacing passphrase does not need third argument
 			//It will be asked separately by replace_part()
 			if(strcmp(argv[optind], "passphrase") != 0) {
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 					return 0;
 				}
 			}
-			
+
 			int id = atoi(optarg);
 			char *what = argv[optind];
 			char *content = argv[optind + 1];
@@ -251,6 +251,6 @@ int main(int argc, char *argv[])
 		}
 
 	}
-	
+
 	return 0;
 }
